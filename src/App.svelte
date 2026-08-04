@@ -212,10 +212,7 @@
 <main class="flex min-h-screen flex-col gap-2 bg-white p-2 text-black dark:bg-neutral-900 dark:text-neutral-100">
   <div class="flex flex-row items-center gap-2">
     <span class="grow font-bold">{m.app_name()}</span>
-    <button
-      class="border border-neutral-300 px-1 dark:border-neutral-700"
-      onclick={() => (dark = !dark)}
-    >
+    <button class="px-1" onclick={() => (dark = !dark)}>
       {dark ? '☀️' : '🌙'}
     </button>
   </div>
@@ -246,16 +243,36 @@
 
   <ul class="flex flex-col gap-2">
     {#each options as option (option.id)}
-      <li
-        class="flex flex-col"
-        class:bg-blue-50={myVotes[option.id]}
-        class:dark:bg-blue-950={myVotes[option.id]}
-      >
-        <div class="flex h-1 flex-row">
-          <div class="bg-blue-500" style="flex-grow: {votePercent(option.id)}"></div>
-          <div style="flex-grow: {100 - votePercent(option.id)}"></div>
-        </div>
-        <div class="flex flex-row items-center">
+      <li class="flex flex-col gap-1">
+        <div class="flex flex-row items-center gap-2">
+          <button
+            class="self-start"
+            aria-label={myVotes[option.id] ? 'Remove vote' : 'Vote'}
+            onclick={() => toggleVote(option.id)}
+          >
+            {#if myVotes[option.id]}
+              <svg class="text-blue-500" width="28" height="28" viewBox="0 0 16 16">
+                <circle cx="8" cy="8" r="7" fill="currentColor" />
+                <path
+                  d="M5 8.5l2 2 4-5"
+                  fill="none"
+                  stroke="white"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            {:else}
+              <svg
+                class="text-neutral-300 dark:text-neutral-600"
+                width="28"
+                height="28"
+                viewBox="0 0 16 16"
+              >
+                <circle cx="8" cy="8" r="5" fill="none" stroke="currentColor" stroke-width="2" />
+              </svg>
+            {/if}
+          </button>
           <textarea
             class="grow resize-none overflow-hidden break-words whitespace-pre-wrap"
             rows="1"
@@ -264,12 +281,21 @@
             oninput={() => handleOptionInput(option.id)}
           ></textarea>
         </div>
+        <div class="flex h-2.5 flex-row">
+          <div
+            class="rounded-l-full bg-blue-500"
+            class:rounded-r-full={votePercent(option.id) === 100}
+            style="flex-grow: {votePercent(option.id)}"
+          ></div>
+          <div
+            class="rounded-r-full bg-blue-200 dark:bg-blue-950"
+            class:rounded-l-full={votePercent(option.id) === 0}
+            style="flex-grow: {100 - votePercent(option.id)}"
+          ></div>
+        </div>
         <div class="flex flex-row items-center gap-2 text-sm text-neutral-500 dark:text-neutral-400">
-          <button class="self-start" onclick={() => toggleVote(option.id)}>
-            {myVotes[option.id] ? '☑' : '☐'}
-          </button>
           <span class="grow"
-            >{voteNames[option.id]?.length ? voteNames[option.id].join(', ') : '—'}</span
+            >{voteNames[option.id]?.join(', ') ?? ''}</span
           >
           <span class="self-start whitespace-nowrap"
             >{voteCount(option.id)}/{totalVoterCount} ({votePercent(option.id)}%)</span
