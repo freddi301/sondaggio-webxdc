@@ -25,6 +25,7 @@
     "vite": "^8.2.0"
   },
   "dependencies": {
+    "@thisux/sveltednd": "^0.7.0",
     "yjs": "^13.6.31"
   }
 }

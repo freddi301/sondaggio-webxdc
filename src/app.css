@@ -3,3 +3,43 @@
 /* Force `dark:` to be selector-based instead of `prefers-color-scheme`-based,
    so it can be toggled explicitly instead of relying on the OS/browser. */
 @custom-variant dark (&:where(.dark, .dark *));
+
+/* @thisux/sveltednd ships this as dist/styles/dnd.css, but its package.json
+   "exports" only lists the "." entry, so the CSS subpath can't be imported —
+   hand-ported here instead. Drag/drop-position feedback classes only. */
+.svelte-dnd-draggable {
+  touch-action: none;
+  user-select: none;
+}
+.svelte-dnd-dragging {
+  opacity: 0.5;
+  cursor: grabbing;
+}
+.svelte-dnd-droppable {
+  position: relative;
+}
+.svelte-dnd-drop-target {
+  outline: 2px dashed #4caf50;
+}
+.drop-before,
+.drop-after {
+  position: relative;
+}
+.drop-before::before,
+.drop-after::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background-color: #3b82f6;
+  border-radius: 1px;
+  z-index: 10;
+  pointer-events: none;
+}
+.drop-before::before {
+  top: -1px;
+}
+.drop-after::after {
+  bottom: -1px;
+}

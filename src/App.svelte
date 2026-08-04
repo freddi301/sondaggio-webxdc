@@ -12,6 +12,7 @@
     initialSyncDone,
   } from './yjs-sync'
   import { m } from './paraglide/messages.js'
+  import { draggable, droppable, type DragDropState } from '@thisux/sveltednd'
 
   interface Option {
     id: string
@@ -189,6 +190,21 @@
     })
   }
 
+  function handleOptionDrop(state: DragDropState<Option>) {
+    const { draggedItem, targetContainer, dropPosition } = state
+    const order = yoptionOrder.toArray()
+    const dragIndex = order.indexOf(draggedItem.id)
+    let dropIndex = parseInt(targetContainer ?? '0')
+    if (dropPosition === 'after') dropIndex++
+    if (dragIndex === -1) return
+    const adjusted = dragIndex < dropIndex ? dropIndex - 1 : dropIndex
+    if (adjusted === dragIndex) return
+    ydoc.transact(() => {
+      yoptionOrder.delete(dragIndex, 1)
+      yoptionOrder.insert(adjusted, [draggedItem.id])
+    })
+  }
+
   function handleOptionInput(id: string) {
     optionSaving[id] = true
     clearTimeout(optionTimers.get(id))
@@ -209,7 +225,7 @@
   }
 </script>
 
-<main class="flex min-h-screen flex-col gap-2 bg-white p-2 text-black dark:bg-neutral-900 dark:text-neutral-100">
+<main class="flex min-h-screen flex-col gap-2 bg-white p-2 text-black dark:bg-neutral-800 dark:text-neutral-100">
   <div class="flex flex-row items-center gap-2">
     <span class="grow font-bold">{m.app_name()}</span>
     <button class="px-1" onclick={() => (dark = !dark)}>
@@ -217,36 +233,57 @@
     </button>
   </div>
 
-  <div class="flex flex-row items-center gap-2">
+  <div class="relative flex flex-row items-center gap-2">
     <textarea
-      class="grow resize-none overflow-hidden text-lg font-bold break-words whitespace-pre-wrap"
+      class="grow resize-none overflow-hidden text-xl font-bold break-words whitespace-pre-wrap outline-none focus:ring-2 focus:ring-blue-500"
       rows="1"
       bind:value={title}
       use:autogrow={title}
       oninput={handleTitleInput}
       placeholder={m.title_placeholder()}
     ></textarea>
-    <span class:opacity-0={!titleSaving}>💾</span>
+    <span class="absolute top-0 right-0" class:opacity-0={!titleSaving}>💾</span>
   </div>
 
-  <div class="flex flex-row items-center gap-2">
+  <div class="relative flex flex-row items-center gap-2">
     <textarea
-      class="grow resize-none overflow-hidden break-words whitespace-pre-wrap"
+      class="grow resize-none overflow-hidden break-words whitespace-pre-wrap outline-none focus:ring-2 focus:ring-blue-500"
       rows="1"
       bind:value={description}
       use:autogrow={description}
       oninput={handleDescriptionInput}
       placeholder={m.description_placeholder()}
     ></textarea>
-    <span class:opacity-0={!descriptionSaving}>💾</span>
+    <span class="absolute top-0 right-0" class:opacity-0={!descriptionSaving}>💾</span>
   </div>
 
-  <ul class="flex flex-col gap-2">
-    {#each options as option (option.id)}
-      <li class="flex flex-col gap-1">
-        <div class="flex flex-row items-center gap-2">
+  <ul class="flex flex-col gap-4 pt-4">
+    {#each options as option, index (option.id)}
+      <li
+        class="flex flex-col gap-1"
+        use:draggable={{
+          container: index.toString(),
+          dragData: option,
+          handle: '.option-drag-handle',
+        }}
+        use:droppable={{
+          container: index.toString(),
+          callbacks: { onDrop: handleOptionDrop },
+        }}
+      >
+        <div class="relative flex flex-row items-center">
+          <span class="option-drag-handle cursor-grab self-start text-neutral-400">
+            <svg width="17" height="28" viewBox="-1.5 -1.5 12 18">
+              <circle cx="1.5" cy="1.5" r="1.3" fill="currentColor" />
+              <circle cx="7.5" cy="1.5" r="1.3" fill="currentColor" />
+              <circle cx="1.5" cy="7.5" r="1.3" fill="currentColor" />
+              <circle cx="7.5" cy="7.5" r="1.3" fill="currentColor" />
+              <circle cx="1.5" cy="13.5" r="1.3" fill="currentColor" />
+              <circle cx="7.5" cy="13.5" r="1.3" fill="currentColor" />
+            </svg>
+          </span>
           <button
-            class="self-start"
+            class="self-start ml-1"
             aria-label={myVotes[option.id] ? 'Remove vote' : 'Vote'}
             onclick={() => toggleVote(option.id)}
           >
@@ -269,17 +306,23 @@
                 height="28"
                 viewBox="0 0 16 16"
               >
-                <circle cx="8" cy="8" r="5" fill="none" stroke="currentColor" stroke-width="2" />
+                <circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" stroke-width="2" />
               </svg>
             {/if}
           </button>
           <textarea
-            class="grow resize-none overflow-hidden break-words whitespace-pre-wrap"
+            class="grow resize-none overflow-hidden break-words whitespace-pre-wrap outline-none focus:ring-2 focus:ring-blue-500 ml-2"
             rows="1"
             bind:value={option.text}
             use:autogrow={option.text}
             oninput={() => handleOptionInput(option.id)}
+            placeholder={m.option_placeholder()}
           ></textarea>
+          {#if optionSaving[option.id]}
+            <span class="absolute top-0 right-0">💾</span>
+          {:else if option.text.trim() === ''}
+            <button class="self-start px-1" onclick={() => deleteOption(option.id)}>🗑️</button>
+          {/if}
         </div>
         <div class="flex h-2.5 flex-row">
           <div
@@ -293,28 +336,26 @@
             style="flex-grow: {100 - votePercent(option.id)}"
           ></div>
         </div>
-        <div class="flex flex-row items-center gap-2 text-sm text-neutral-500 dark:text-neutral-400">
+        <div class="flex flex-row items-center gap-2 text-sm text-neutral-600 dark:text-neutral-400">
           <span class="grow"
             >{voteNames[option.id]?.join(', ') ?? ''}</span
           >
           <span class="self-start whitespace-nowrap"
             >{voteCount(option.id)}/{totalVoterCount} ({votePercent(option.id)}%)</span
           >
-          {#if optionSaving[option.id]}
-            <span class="self-start">💾</span>
-          {:else}
-            <button class="self-start px-1" onclick={() => deleteOption(option.id)}>🗑️</button>
-          {/if}
         </div>
       </li>
     {/each}
   </ul>
 
   <button
-    class="self-center border border-neutral-300 px-2 py-1 disabled:opacity-50 dark:border-neutral-700"
+    class="self-center px-2 py-1 disabled:opacity-50"
     disabled={anyOptionSaving}
     onclick={addOption}
+    aria-label="Add option"
   >
-    ➕
+    <svg class="text-blue-500" width="24" height="24" viewBox="0 0 16 16">
+      <path d="M6 2h4v4h4v4h-4v4h-4v-4h-4v-4h4v-4z" fill="currentColor" />
+    </svg>
   </button>
 </main>

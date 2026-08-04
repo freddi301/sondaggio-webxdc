@@ -46,6 +46,6 @@ export const initialSyncDone: Promise<void> = window.webxdc
 if (window.webxdc) {
   ydoc.on('update', (update: Uint8Array, origin: unknown) => {
     if (origin === REMOTE) return
-    window.webxdc.sendUpdate({ payload: bytesToBase64(update) }, '')
+    window.webxdc.sendUpdate({ payload: bytesToBase64(update), document: ytitle.toString() }, '')
   })
 }
