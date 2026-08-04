@@ -1,6 +1,15 @@
 <script lang="ts">
   import * as Y from 'yjs'
-  import { ydoc, ytitle, ydescription, yoptionTexts, yoptionOrder, initialSyncDone } from './yjs-sync'
+  import {
+    ydoc,
+    ytitle,
+    ydescription,
+    yoptionTexts,
+    yoptionOrder,
+    yoptionVotes,
+    selfId,
+    initialSyncDone,
+  } from './yjs-sync'
   import { m } from './paraglide/messages.js'
 
   interface Option {
@@ -107,6 +116,7 @@
     const id = crypto.randomUUID()
     ydoc.transact(() => {
       yoptionTexts.set(id, new Y.Text())
+      yoptionVotes.set(id, new Y.Map<boolean>())
       yoptionOrder.push([id])
     })
   }
@@ -123,6 +133,7 @@
       const index = yoptionOrder.toArray().indexOf(id)
       if (index !== -1) yoptionOrder.delete(index, 1)
       yoptionTexts.delete(id)
+      yoptionVotes.delete(id)
     })
     clearTimeout(optionTimers.get(id))
     optionTimers.delete(id)
@@ -131,6 +142,46 @@
 
   let optionSaving = $state<Record<string, boolean>>({})
   const optionTimers = new Map<string, ReturnType<typeof setTimeout>>()
+
+  let voteCounts = $state<Record<string, number>>({})
+  let myVotes = $state<Record<string, boolean>>({})
+  let totalVoterCount = $state(0)
+
+  function syncVotes() {
+    const counts: Record<string, number> = {}
+    const mine: Record<string, boolean> = {}
+    const voters = new Set<string>()
+    for (const id of yoptionOrder.toArray()) {
+      const votes = yoptionVotes.get(id)
+      counts[id] = votes?.size ?? 0
+      mine[id] = votes?.has(selfId) ?? false
+      if (votes) for (const voter of votes.keys()) voters.add(voter)
+    }
+    voteCounts = counts
+    myVotes = mine
+    totalVoterCount = voters.size
+  }
+
+  yoptionVotes.observeDeep(syncVotes)
+  yoptionOrder.observe(syncVotes)
+  syncVotes()
+
+  function votePercent(id: string): number {
+    if (totalVoterCount === 0) return 0
+    return Math.round(((voteCounts[id] ?? 0) / totalVoterCount) * 100)
+  }
+
+  function toggleVote(id: string) {
+    const votes = yoptionVotes.get(id)
+    if (!votes) return
+    ydoc.transact(() => {
+      if (votes.has(selfId)) {
+        votes.delete(selfId)
+      } else {
+        votes.set(selfId, true)
+      }
+    })
+  }
 
   function handleOptionInput(id: string) {
     optionSaving[id] = true
@@ -187,27 +238,35 @@
 
   <ul class="flex flex-col gap-2">
     {#each options as option (option.id)}
-      <li class="flex flex-row items-center">
-        <button class="self-start border-y border-l border-neutral-300 dark:border-neutral-700">
-          ☐
-        </button>
-        <textarea
-          class="grow resize-none overflow-hidden border border-neutral-300 px-1 break-words whitespace-pre-wrap dark:border-neutral-700"
-          rows="1"
-          bind:value={option.text}
-          use:autogrow={option.text}
-          oninput={() => handleOptionInput(option.id)}
-        ></textarea>
-        {#if optionSaving[option.id]}
-          <span>💾</span>
-        {:else}
+      <li class="flex flex-col">
+        <div class="flex flex-row items-center">
           <button
-            class="self-start border-y border-r border-neutral-300 px-1 dark:border-neutral-700"
-            onclick={() => deleteOption(option.id)}
+            class="self-start border-y border-l border-neutral-300 dark:border-neutral-700"
+            onclick={() => toggleVote(option.id)}
           >
-            🗑️
+            {myVotes[option.id] ? '☑' : '☐'}
           </button>
-        {/if}
+          <textarea
+            class="grow resize-none overflow-hidden border border-neutral-300 px-1 break-words whitespace-pre-wrap dark:border-neutral-700"
+            rows="1"
+            bind:value={option.text}
+            use:autogrow={option.text}
+            oninput={() => handleOptionInput(option.id)}
+          ></textarea>
+          {#if optionSaving[option.id]}
+            <span>💾</span>
+          {:else}
+            <button
+              class="self-start border-y border-r border-neutral-300 px-1 dark:border-neutral-700"
+              onclick={() => deleteOption(option.id)}
+            >
+              🗑️
+            </button>
+          {/if}
+        </div>
+        <div class="flex flex-row items-center gap-1 text-sm">
+          🧑 {voteCounts[option.id] ?? 0}/{totalVoterCount} ({votePercent(option.id)}%)
+        </div>
       </li>
     {/each}
   </ul>
