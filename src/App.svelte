@@ -7,6 +7,24 @@
     text: string
   }
 
+  // Grows the textarea's height to fit its content, re-measuring on every
+  // input and whenever the bound value changes programmatically (e.g. a
+  // remote yjs update), since only the former fires a native 'input' event.
+  function autogrow(node: HTMLTextAreaElement, _value: string) {
+    function resize() {
+      node.style.height = 'auto'
+      node.style.height = `${node.scrollHeight}px`
+    }
+    resize()
+    node.addEventListener('input', resize)
+    return {
+      update: resize,
+      destroy() {
+        node.removeEventListener('input', resize)
+      },
+    }
+  }
+
   // The destination browser can't tell us the real preference, so default to dark.
   let dark = $state(true)
 
@@ -76,41 +94,48 @@
 <main class="flex min-h-screen flex-col gap-2 bg-white p-2 text-black dark:bg-neutral-900 dark:text-neutral-100">
   <div class="flex flex-row items-center gap-2">
     <span class="grow font-bold">{m.app_name()}</span>
-    <button onclick={() => (dark = !dark)}>{dark ? '☀️' : '🌙'}</button>
+    <button
+      class="border border-neutral-300 px-2 py-1 dark:border-neutral-700"
+      onclick={() => (dark = !dark)}
+    >
+      {dark ? '☀️' : '🌙'}
+    </button>
   </div>
 
   <div class="flex flex-row items-center gap-2 border border-neutral-300 px-1 dark:border-neutral-700">
     <textarea
-      class="grow resize-none"
+      class="grow resize-none overflow-hidden break-words whitespace-pre-wrap"
       rows="1"
       bind:value={title}
+      use:autogrow={title}
       oninput={handleTitleInput}
-      placeholder={m.title_placeholder()}
     ></textarea>
     <span class:opacity-0={!titleSaving}>💾</span>
   </div>
 
   <div class="flex flex-row items-center gap-2 border border-neutral-300 px-1 dark:border-neutral-700">
     <textarea
-      class="grow resize-none"
+      class="grow resize-none overflow-hidden break-words whitespace-pre-wrap"
       rows="1"
       bind:value={description}
+      use:autogrow={description}
       oninput={handleDescriptionInput}
-      placeholder={m.description_placeholder()}
     ></textarea>
     <span class:opacity-0={!descriptionSaving}>💾</span>
   </div>
 
-  <ul>
+  <ul class="flex flex-col gap-2">
     {#each options as option (option.id)}
-      <li>
+      <li
+        class="flex flex-row items-center gap-2 border border-neutral-300 px-1 dark:border-neutral-700"
+      >
         <textarea
-          class="resize-none border border-neutral-300 px-1 dark:border-neutral-700"
+          class="grow resize-none overflow-hidden break-words whitespace-pre-wrap"
           rows="1"
           bind:value={option.text}
-          placeholder={m.option_placeholder()}
+          use:autogrow={option.text}
         ></textarea>
-        <button onclick={() => deleteOption(option.id)}>{m.delete()}</button>
+        <button onclick={() => deleteOption(option.id)}>🗑️</button>
       </li>
     {/each}
   </ul>

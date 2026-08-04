@@ -1,9 +1,5 @@
 {
   "$schema": "https://inlang.com/schema/inlang-message-format",
   "app_name": "Sondaggio",
-  "title_placeholder": "Titolo",
-  "description_placeholder": "Descrizione",
-  "option_placeholder": "Opzione",
-  "add_option": "Aggiungi opzione",
-  "delete": "Elimina"
+  "add_option": "Aggiungi opzione"
 }
