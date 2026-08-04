@@ -1,9 +1,10 @@
 <script lang="ts">
-  import { ydoc, ytitle, ydescription } from './yjs-sync'
+  import * as Y from 'yjs'
+  import { ydoc, ytitle, ydescription, yoptionTexts, yoptionOrder, initialSyncDone } from './yjs-sync'
   import { m } from './paraglide/messages.js'
 
   interface Option {
-    id: number
+    id: string
     text: string
   }
 
@@ -82,15 +83,72 @@
     }, 3000)
   }
 
-  let options = $state<Option[]>([{ id: 0, text: '' }])
-  let nextId = 1
-
-  function addOption() {
-    options.push({ id: nextId++, text: '' })
+  function readOptions(): Option[] {
+    return yoptionOrder.toArray().map((id) => ({
+      id,
+      text: yoptionTexts.get(id)?.toString() ?? '',
+    }))
   }
 
-  function deleteOption(id: number) {
-    options = options.filter((option) => option.id !== id)
+  let options = $state<Option[]>(readOptions())
+
+  function syncOptions() {
+    options = yoptionOrder.toArray().map((id) => {
+      const text = yoptionTexts.get(id)?.toString() ?? ''
+      const existing = options.find((option) => option.id === id)
+      return existing && existing.text === text ? existing : { id, text }
+    })
+  }
+
+  yoptionOrder.observe(syncOptions)
+  yoptionTexts.observeDeep(syncOptions)
+
+  function addOption() {
+    const id = crypto.randomUUID()
+    ydoc.transact(() => {
+      yoptionTexts.set(id, new Y.Text())
+      yoptionOrder.push([id])
+    })
+  }
+
+  // Start with one empty option, same as before options were synced — but
+  // only once past updates have actually been replayed, otherwise every
+  // reload would look empty for a moment and get its own spurious option.
+  initialSyncDone.then(() => {
+    if (yoptionOrder.length === 0) addOption()
+  })
+
+  function deleteOption(id: string) {
+    ydoc.transact(() => {
+      const index = yoptionOrder.toArray().indexOf(id)
+      if (index !== -1) yoptionOrder.delete(index, 1)
+      yoptionTexts.delete(id)
+    })
+    clearTimeout(optionTimers.get(id))
+    optionTimers.delete(id)
+    delete optionSaving[id]
+  }
+
+  let optionSaving = $state<Record<string, boolean>>({})
+  const optionTimers = new Map<string, ReturnType<typeof setTimeout>>()
+
+  function handleOptionInput(id: string) {
+    optionSaving[id] = true
+    clearTimeout(optionTimers.get(id))
+    optionTimers.set(
+      id,
+      setTimeout(() => {
+        optionSaving[id] = false
+        const option = options.find((o) => o.id === id)
+        const ytext = yoptionTexts.get(id)
+        if (option && ytext && option.text !== ytext.toString()) {
+          ydoc.transact(() => {
+            ytext.delete(0, ytext.length)
+            ytext.insert(0, option.text)
+          })
+        }
+      }, 3000),
+    )
   }
 </script>
 
@@ -105,9 +163,9 @@
     </button>
   </div>
 
-  <div class="flex flex-row items-center gap-2 border border-neutral-300 px-1 dark:border-neutral-700">
+  <div class="flex flex-row items-center gap-2 border border-neutral-300 dark:border-neutral-700">
     <textarea
-      class="grow resize-none overflow-hidden break-words whitespace-pre-wrap"
+      class="grow resize-none overflow-hidden px-1 break-words whitespace-pre-wrap"
       rows="1"
       bind:value={title}
       use:autogrow={title}
@@ -116,9 +174,9 @@
     <span class:opacity-0={!titleSaving}>💾</span>
   </div>
 
-  <div class="flex flex-row items-center gap-2 border border-neutral-300 px-1 dark:border-neutral-700">
+  <div class="flex flex-row items-center gap-2 border border-neutral-300 dark:border-neutral-700">
     <textarea
-      class="grow resize-none overflow-hidden break-words whitespace-pre-wrap"
+      class="grow resize-none overflow-hidden px-1 break-words whitespace-pre-wrap"
       rows="1"
       bind:value={description}
       use:autogrow={description}
@@ -129,19 +187,35 @@
 
   <ul class="flex flex-col gap-2">
     {#each options as option (option.id)}
-      <li
-        class="flex flex-row items-center gap-2 border border-neutral-300 px-1 dark:border-neutral-700"
-      >
+      <li class="flex flex-row items-center">
+        <button class="self-start border-y border-l border-neutral-300 dark:border-neutral-700">
+          ☐
+        </button>
         <textarea
-          class="grow resize-none overflow-hidden break-words whitespace-pre-wrap"
+          class="grow resize-none overflow-hidden border border-neutral-300 px-1 break-words whitespace-pre-wrap dark:border-neutral-700"
           rows="1"
           bind:value={option.text}
           use:autogrow={option.text}
+          oninput={() => handleOptionInput(option.id)}
         ></textarea>
-        <button onclick={() => deleteOption(option.id)}>🗑️</button>
+        {#if optionSaving[option.id]}
+          <span>💾</span>
+        {:else}
+          <button
+            class="self-start border-y border-r border-neutral-300 px-1 dark:border-neutral-700"
+            onclick={() => deleteOption(option.id)}
+          >
+            🗑️
+          </button>
+        {/if}
       </li>
     {/each}
   </ul>
 
-  <button onclick={addOption}>{m.add_option()}</button>
+  <button
+    class="self-center border border-neutral-300 px-2 py-1 dark:border-neutral-700"
+    onclick={addOption}
+  >
+    ➕
+  </button>
 </main>
