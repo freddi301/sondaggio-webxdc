@@ -7,15 +7,21 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "check": "svelte-check --tsconfig ./tsconfig.app.json && tsc -p tsconfig.node.json"
+    "check": "svelte-check --tsconfig ./tsconfig.app.json && tsc -p tsconfig.node.json",
+    "simulate": "webxdc-dev run http://localhost:5174"
   },
   "devDependencies": {
     "@sveltejs/vite-plugin-svelte": "^7.2.0",
     "@tsconfig/svelte": "^5.0.8",
     "@types/node": "^24.13.3",
+    "@webxdc/types": "^2.2.0",
+    "@webxdc/webxdc-dev": "^0.21.0",
     "svelte": "^5.56.8",
     "svelte-check": "^4.7.3",
     "typescript": "~6.0.2",
     "vite": "^8.2.0"
+  },
+  "dependencies": {
+    "yjs": "^13.6.31"
   }
 }

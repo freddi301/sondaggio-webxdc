@@ -1,11 +1,36 @@
 <script lang="ts">
+  import { ydoc, ytitle } from './yjs-sync'
+
   interface Option {
     id: number
     text: string
   }
 
-  let title = $state('')
+  let title = $state(ytitle.toString())
   let description = $state('')
+
+  ytitle.observe(() => {
+    const text = ytitle.toString()
+    if (text !== title) title = text
+  })
+
+  let titleSaving = $state(false)
+  let titleTimer: ReturnType<typeof setTimeout> | undefined
+
+  function handleTitleInput() {
+    titleSaving = true
+    clearTimeout(titleTimer)
+    titleTimer = setTimeout(() => {
+      titleSaving = false
+      if (title !== ytitle.toString()) {
+        ydoc.transact(() => {
+          ytitle.delete(0, ytitle.length)
+          ytitle.insert(0, title)
+        })
+      }
+    }, 3000)
+  }
+
   let options = $state<Option[]>([{ id: 0, text: '' }])
   let nextId = 1
 
@@ -19,7 +44,10 @@
 </script>
 
 <main>
-  <textarea bind:value={title} placeholder="Title"></textarea>
+  <div>
+    <textarea bind:value={title} oninput={handleTitleInput} placeholder="Title"></textarea>
+    {#if titleSaving}💾{/if}
+  </div>
 
   <textarea bind:value={description} placeholder="Description"></textarea>
 
