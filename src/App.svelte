@@ -1,5 +1,6 @@
 <script lang="ts">
   import { ydoc, ytitle, ydescription } from './yjs-sync'
+  import { m } from './paraglide/messages.js'
 
   interface Option {
     id: number
@@ -74,28 +75,28 @@
 
 <main class="flex min-h-screen flex-col gap-2 bg-white p-2 text-black dark:bg-neutral-900 dark:text-neutral-100">
   <div class="flex flex-row items-center gap-2">
-    <span class="grow font-bold">Sondaggio</span>
+    <span class="grow font-bold">{m.app_name()}</span>
     <button onclick={() => (dark = !dark)}>{dark ? '☀️' : '🌙'}</button>
   </div>
 
-  <div class="flex flex-row gap-2">
+  <div class="flex flex-row items-center gap-2 border border-neutral-300 px-1 dark:border-neutral-700">
     <textarea
       class="grow resize-none"
       rows="1"
       bind:value={title}
       oninput={handleTitleInput}
-      placeholder="Title"
+      placeholder={m.title_placeholder()}
     ></textarea>
     <span class:opacity-0={!titleSaving}>💾</span>
   </div>
 
-  <div class="flex flex-row gap-2">
+  <div class="flex flex-row items-center gap-2 border border-neutral-300 px-1 dark:border-neutral-700">
     <textarea
       class="grow resize-none"
       rows="1"
       bind:value={description}
       oninput={handleDescriptionInput}
-      placeholder="Description"
+      placeholder={m.description_placeholder()}
     ></textarea>
     <span class:opacity-0={!descriptionSaving}>💾</span>
   </div>
@@ -104,15 +105,15 @@
     {#each options as option (option.id)}
       <li>
         <textarea
-          class="resize-none"
+          class="resize-none border border-neutral-300 px-1 dark:border-neutral-700"
           rows="1"
           bind:value={option.text}
-          placeholder="Option"
+          placeholder={m.option_placeholder()}
         ></textarea>
-        <button onclick={() => deleteOption(option.id)}>Delete</button>
+        <button onclick={() => deleteOption(option.id)}>{m.delete()}</button>
       </li>
     {/each}
   </ul>
 
-  <button onclick={addOption}>Add option</button>
+  <button onclick={addOption}>{m.add_option()}</button>
 </main>

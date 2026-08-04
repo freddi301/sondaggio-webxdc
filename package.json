@@ -11,6 +11,7 @@
     "simulate": "webxdc-dev run http://localhost:5174"
   },
   "devDependencies": {
+    "@inlang/paraglide-js": "^2.23.1",
     "@sveltejs/vite-plugin-svelte": "^7.2.0",
     "@tailwindcss/vite": "^4.3.3",
     "@tsconfig/svelte": "^5.0.8",
