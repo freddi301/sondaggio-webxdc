@@ -2,6 +2,7 @@ import * as Y from 'yjs'
 
 export const ydoc = new Y.Doc()
 export const ytitle = ydoc.getText('title')
+export const ydescription = ydoc.getText('description')
 
 const REMOTE = 'remote'
 

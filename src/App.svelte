@@ -1,17 +1,29 @@
 <script lang="ts">
-  import { ydoc, ytitle } from './yjs-sync'
+  import { ydoc, ytitle, ydescription } from './yjs-sync'
 
   interface Option {
     id: number
     text: string
   }
 
+  // The destination browser can't tell us the real preference, so default to dark.
+  let dark = $state(true)
+
+  $effect(() => {
+    document.documentElement.classList.toggle('dark', dark)
+  })
+
   let title = $state(ytitle.toString())
-  let description = $state('')
+  let description = $state(ydescription.toString())
 
   ytitle.observe(() => {
     const text = ytitle.toString()
     if (text !== title) title = text
+  })
+
+  ydescription.observe(() => {
+    const text = ydescription.toString()
+    if (text !== description) description = text
   })
 
   let titleSaving = $state(false)
@@ -31,6 +43,23 @@
     }, 3000)
   }
 
+  let descriptionSaving = $state(false)
+  let descriptionTimer: ReturnType<typeof setTimeout> | undefined
+
+  function handleDescriptionInput() {
+    descriptionSaving = true
+    clearTimeout(descriptionTimer)
+    descriptionTimer = setTimeout(() => {
+      descriptionSaving = false
+      if (description !== ydescription.toString()) {
+        ydoc.transact(() => {
+          ydescription.delete(0, ydescription.length)
+          ydescription.insert(0, description)
+        })
+      }
+    }, 3000)
+  }
+
   let options = $state<Option[]>([{ id: 0, text: '' }])
   let nextId = 1
 
@@ -43,18 +72,43 @@
   }
 </script>
 
-<main>
-  <div>
-    <textarea bind:value={title} oninput={handleTitleInput} placeholder="Title"></textarea>
-    {#if titleSaving}💾{/if}
+<main class="flex min-h-screen flex-col gap-2 bg-white p-2 text-black dark:bg-neutral-900 dark:text-neutral-100">
+  <div class="flex flex-row items-center gap-2">
+    <span class="grow font-bold">Sondaggio</span>
+    <button onclick={() => (dark = !dark)}>{dark ? '☀️' : '🌙'}</button>
   </div>
 
-  <textarea bind:value={description} placeholder="Description"></textarea>
+  <div class="flex flex-row gap-2">
+    <textarea
+      class="grow resize-none"
+      rows="1"
+      bind:value={title}
+      oninput={handleTitleInput}
+      placeholder="Title"
+    ></textarea>
+    <span class:opacity-0={!titleSaving}>💾</span>
+  </div>
+
+  <div class="flex flex-row gap-2">
+    <textarea
+      class="grow resize-none"
+      rows="1"
+      bind:value={description}
+      oninput={handleDescriptionInput}
+      placeholder="Description"
+    ></textarea>
+    <span class:opacity-0={!descriptionSaving}>💾</span>
+  </div>
 
   <ul>
     {#each options as option (option.id)}
       <li>
-        <textarea bind:value={option.text} placeholder="Option"></textarea>
+        <textarea
+          class="resize-none"
+          rows="1"
+          bind:value={option.text}
+          placeholder="Option"
+        ></textarea>
         <button onclick={() => deleteOption(option.id)}>Delete</button>
       </li>
     {/each}
