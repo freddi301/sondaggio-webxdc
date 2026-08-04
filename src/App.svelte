@@ -225,15 +225,16 @@
   }
 </script>
 
-<main class="flex min-h-screen flex-col gap-2 bg-white p-2 text-black dark:bg-neutral-800 dark:text-neutral-100">
-  <div class="flex flex-row items-center gap-2">
+<main class="flex min-h-screen flex-col gap-2 bg-white text-black dark:bg-neutral-800 dark:text-neutral-100 py-2">
+  <div class="flex flex-row items-center gap-2 px-4">
+    <img src="/icon.svg" alt="" class="h-6 w-6 mb-1" />
     <span class="grow font-bold">{m.app_name()}</span>
-    <button class="px-1" onclick={() => (dark = !dark)}>
-      {dark ? '☀️' : '🌙'}
+    <button class="text-sm" onclick={() => (dark = !dark)}>
+      {dark ? '🌙' : '☀️'}
     </button>
   </div>
 
-  <div class="relative flex flex-row items-center gap-2">
+  <div class="relative flex flex-row items-center gap-2 px-4">
     <textarea
       class="grow resize-none overflow-hidden text-xl font-bold break-words whitespace-pre-wrap outline-none focus:ring-2 focus:ring-blue-500"
       rows="1"
@@ -245,7 +246,7 @@
     <span class="absolute top-0 right-0" class:opacity-0={!titleSaving}>💾</span>
   </div>
 
-  <div class="relative flex flex-row items-center gap-2">
+  <div class="relative flex flex-row items-center gap-2 px-4">
     <textarea
       class="grow resize-none overflow-hidden break-words whitespace-pre-wrap outline-none focus:ring-2 focus:ring-blue-500"
       rows="1"
@@ -260,7 +261,7 @@
   <ul class="flex flex-col gap-4 pt-4">
     {#each options as option, index (option.id)}
       <li
-        class="flex flex-col gap-1"
+        class="flex flex-col gap-1 px-2"
         use:draggable={{
           container: index.toString(),
           dragData: option,
