@@ -25,11 +25,14 @@
     }
   }
 
+  const THEME_KEY = 'sondaggio-dark'
+
   // The destination browser can't tell us the real preference, so default to dark.
-  let dark = $state(true)
+  let dark = $state(localStorage.getItem(THEME_KEY) !== 'false')
 
   $effect(() => {
     document.documentElement.classList.toggle('dark', dark)
+    localStorage.setItem(THEME_KEY, String(dark))
   })
 
   let title = $state(ytitle.toString())
