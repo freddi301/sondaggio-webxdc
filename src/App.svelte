@@ -8,6 +8,7 @@
     yoptionOrder,
     yoptionVotes,
     selfId,
+    selfName,
     initialSyncDone,
   } from './yjs-sync'
   import { m } from './paraglide/messages.js'
@@ -116,7 +117,7 @@
     const id = crypto.randomUUID()
     ydoc.transact(() => {
       yoptionTexts.set(id, new Y.Text())
-      yoptionVotes.set(id, new Y.Map<boolean>())
+      yoptionVotes.set(id, new Y.Map<string>())
       yoptionOrder.push([id])
     })
   }
@@ -141,23 +142,24 @@
   }
 
   let optionSaving = $state<Record<string, boolean>>({})
+  let anyOptionSaving = $derived(Object.values(optionSaving).some(Boolean))
   const optionTimers = new Map<string, ReturnType<typeof setTimeout>>()
 
-  let voteCounts = $state<Record<string, number>>({})
+  let voteNames = $state<Record<string, string[]>>({})
   let myVotes = $state<Record<string, boolean>>({})
   let totalVoterCount = $state(0)
 
   function syncVotes() {
-    const counts: Record<string, number> = {}
+    const names: Record<string, string[]> = {}
     const mine: Record<string, boolean> = {}
     const voters = new Set<string>()
     for (const id of yoptionOrder.toArray()) {
       const votes = yoptionVotes.get(id)
-      counts[id] = votes?.size ?? 0
+      names[id] = votes ? [...votes.values()] : []
       mine[id] = votes?.has(selfId) ?? false
       if (votes) for (const voter of votes.keys()) voters.add(voter)
     }
-    voteCounts = counts
+    voteNames = names
     myVotes = mine
     totalVoterCount = voters.size
   }
@@ -166,9 +168,13 @@
   yoptionOrder.observe(syncVotes)
   syncVotes()
 
+  function voteCount(id: string): number {
+    return voteNames[id]?.length ?? 0
+  }
+
   function votePercent(id: string): number {
     if (totalVoterCount === 0) return 0
-    return Math.round(((voteCounts[id] ?? 0) / totalVoterCount) * 100)
+    return Math.round((voteCount(id) / totalVoterCount) * 100)
   }
 
   function toggleVote(id: string) {
@@ -178,7 +184,7 @@
       if (votes.has(selfId)) {
         votes.delete(selfId)
       } else {
-        votes.set(selfId, true)
+        votes.set(selfId, selfName)
       }
     })
   }
@@ -207,72 +213,80 @@
   <div class="flex flex-row items-center gap-2">
     <span class="grow font-bold">{m.app_name()}</span>
     <button
-      class="border border-neutral-300 px-2 py-1 dark:border-neutral-700"
+      class="border border-neutral-300 px-1 dark:border-neutral-700"
       onclick={() => (dark = !dark)}
     >
       {dark ? '☀️' : '🌙'}
     </button>
   </div>
 
-  <div class="flex flex-row items-center gap-2 border border-neutral-300 dark:border-neutral-700">
+  <div class="flex flex-row items-center gap-2">
     <textarea
-      class="grow resize-none overflow-hidden px-1 break-words whitespace-pre-wrap"
+      class="grow resize-none overflow-hidden text-lg font-bold break-words whitespace-pre-wrap"
       rows="1"
       bind:value={title}
       use:autogrow={title}
       oninput={handleTitleInput}
+      placeholder={m.title_placeholder()}
     ></textarea>
     <span class:opacity-0={!titleSaving}>💾</span>
   </div>
 
-  <div class="flex flex-row items-center gap-2 border border-neutral-300 dark:border-neutral-700">
+  <div class="flex flex-row items-center gap-2">
     <textarea
-      class="grow resize-none overflow-hidden px-1 break-words whitespace-pre-wrap"
+      class="grow resize-none overflow-hidden break-words whitespace-pre-wrap"
       rows="1"
       bind:value={description}
       use:autogrow={description}
       oninput={handleDescriptionInput}
+      placeholder={m.description_placeholder()}
     ></textarea>
     <span class:opacity-0={!descriptionSaving}>💾</span>
   </div>
 
   <ul class="flex flex-col gap-2">
     {#each options as option (option.id)}
-      <li class="flex flex-col">
+      <li
+        class="flex flex-col"
+        class:bg-blue-50={myVotes[option.id]}
+        class:dark:bg-blue-950={myVotes[option.id]}
+      >
+        <div class="flex h-1 flex-row">
+          <div class="bg-blue-500" style="flex-grow: {votePercent(option.id)}"></div>
+          <div style="flex-grow: {100 - votePercent(option.id)}"></div>
+        </div>
         <div class="flex flex-row items-center">
-          <button
-            class="self-start border-y border-l border-neutral-300 dark:border-neutral-700"
-            onclick={() => toggleVote(option.id)}
-          >
-            {myVotes[option.id] ? '☑' : '☐'}
-          </button>
           <textarea
-            class="grow resize-none overflow-hidden border border-neutral-300 px-1 break-words whitespace-pre-wrap dark:border-neutral-700"
+            class="grow resize-none overflow-hidden break-words whitespace-pre-wrap"
             rows="1"
             bind:value={option.text}
             use:autogrow={option.text}
             oninput={() => handleOptionInput(option.id)}
           ></textarea>
-          {#if optionSaving[option.id]}
-            <span>💾</span>
-          {:else}
-            <button
-              class="self-start border-y border-r border-neutral-300 px-1 dark:border-neutral-700"
-              onclick={() => deleteOption(option.id)}
-            >
-              🗑️
-            </button>
-          {/if}
         </div>
-        <div class="flex flex-row items-center gap-1 text-sm">
-          🧑 {voteCounts[option.id] ?? 0}/{totalVoterCount} ({votePercent(option.id)}%)
+        <div class="flex flex-row items-center gap-2 text-sm text-neutral-500 dark:text-neutral-400">
+          <button class="self-start" onclick={() => toggleVote(option.id)}>
+            {myVotes[option.id] ? '☑' : '☐'}
+          </button>
+          <span class="grow"
+            >{voteNames[option.id]?.length ? voteNames[option.id].join(', ') : '—'}</span
+          >
+          <span class="self-start whitespace-nowrap"
+            >{voteCount(option.id)}/{totalVoterCount} ({votePercent(option.id)}%)</span
+          >
+          {#if optionSaving[option.id]}
+            <span class="self-start">💾</span>
+          {:else}
+            <button class="self-start px-1" onclick={() => deleteOption(option.id)}>🗑️</button>
+          {/if}
         </div>
       </li>
     {/each}
   </ul>
 
   <button
-    class="self-center border border-neutral-300 px-2 py-1 dark:border-neutral-700"
+    class="self-center border border-neutral-300 px-2 py-1 disabled:opacity-50 dark:border-neutral-700"
+    disabled={anyOptionSaving}
     onclick={addOption}
   >
     ➕

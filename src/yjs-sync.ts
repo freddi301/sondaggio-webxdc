@@ -5,12 +5,15 @@ export const ytitle = ydoc.getText('title')
 export const ydescription = ydoc.getText('description')
 export const yoptionTexts = ydoc.getMap<Y.Text>('optionTexts')
 export const yoptionOrder = ydoc.getArray<string>('optionOrder')
-// Per option, a set of voter ids emulated as a `Y.Map<voterId, true>` (Yjs has no Set type).
-export const yoptionVotes = ydoc.getMap<Y.Map<boolean>>('optionVotes')
+// Per option, a set of voter ids emulated as a `Y.Map<voterId, name>` (Yjs has no
+// Set type); the value is the voter's display name at the time they voted, so it
+// doubles as the set membership check (`.has(id)`) and the label to show for it.
+export const yoptionVotes = ydoc.getMap<Y.Map<string>>('optionVotes')
 
 // Trusting clients to only vote as themselves through this UI; webxdc gives
 // receivers no authenticated sender info to verify that server-side.
 export const selfId = window.webxdc?.selfAddr ?? 'local'
+export const selfName = window.webxdc?.selfName ?? 'You'
 
 const REMOTE = 'remote'
 
