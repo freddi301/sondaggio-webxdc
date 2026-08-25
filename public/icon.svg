@@ -1,5 +1,12 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
-  <rect x="38" y="123" width="40" height="90" fill="#3b82f6" />
-  <rect x="108" y="43" width="40" height="170" fill="#3b82f6" />
-  <rect x="178" y="83" width="40" height="130" fill="#3b82f6" />
+  <defs>
+    <linearGradient id="bars" gradientUnits="objectBoundingBox" x1="1" y1="1" x2="0" y2="0">
+      <stop offset="0" stop-color="#1fe37e" />
+      <stop offset="1" stop-color="#ff179e" />
+    </linearGradient>
+  </defs>
+  <rect x="0" y="0" width="256" height="256" fill="#030712" />
+  <rect x="30" y="108" width="52" height="105" rx="14" fill="url(#bars)" />
+  <rect x="102" y="28" width="52" height="185" rx="14" fill="url(#bars)" />
+  <rect x="174" y="68" width="52" height="145" rx="14" fill="url(#bars)" />
 </svg>
