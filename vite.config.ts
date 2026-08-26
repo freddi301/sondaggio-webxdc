@@ -5,6 +5,9 @@ import { paraglideVitePlugin } from '@inlang/paraglide-js'
 
 // https://vite.dev/config/
 export default defineConfig({
+  // Webxdc apps can't assume they're served from an origin root (e.g. a
+  // file:// or custom-scheme host) — relative asset paths only.
+  base: './',
   plugins: [
     paraglideVitePlugin({
       project: './project.inlang',

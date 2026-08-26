@@ -3,5 +3,15 @@
   "app_name": "Sondaggio",
   "title_placeholder": "Titolo",
   "description_placeholder": "Descrizione",
-  "option_placeholder": "Opzione"
+  "option_placeholder": "Opzione",
+  "votes_summary": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "1 voto",
+        "countPlural=other": "{count} voti"
+      }
+    }
+  ]
 }

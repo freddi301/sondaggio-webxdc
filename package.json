@@ -8,7 +8,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "check": "svelte-check --tsconfig ./tsconfig.app.json && tsc -p tsconfig.node.json",
-    "simulate": "webxdc-dev run http://localhost:5174",
+    "simulate": "webxdc-dev run http://localhost:5173",
     "pack": "vite build && rm -f sondaggio.xdc && cd dist && zip -rX ../sondaggio.xdc . && cd .."
   },
   "devDependencies": {
@@ -27,6 +27,9 @@
   },
   "dependencies": {
     "@thisux/sveltednd": "^0.7.0",
+    "js-base64": "^3.9.3",
+    "y-protocols": "^1.0.7",
+    "y-webxdc": "^1.4.0",
     "yjs": "^13.6.31"
   }
 }

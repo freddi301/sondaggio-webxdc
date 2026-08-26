@@ -1,4 +1,4 @@
-@import 'tailwindcss';
+@import "tailwindcss";
 
 /* Force `dark:` to be selector-based instead of `prefers-color-scheme`-based,
    so it can be toggled explicitly instead of relying on the OS/browser. */
@@ -27,7 +27,7 @@
 }
 .drop-before::before,
 .drop-after::after {
-  content: '';
+  content: "";
   position: absolute;
   left: 0;
   right: 0;
