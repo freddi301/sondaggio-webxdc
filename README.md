@@ -8,6 +8,7 @@ Features:
 - anyone can add more options or change them
 - multiple votes only
 - can change vote anytime
+- history
 
 This app was made as a companion to the existing [Poll](https://webxdc.org/#davidsm10-poll) app with a complementary feature set.
 

@@ -13,5 +13,14 @@
         "countPlural=other": "{count} votes"
       }
     }
-  ]
+  ],
+  "history_view_button": "View edit history",
+  "history_back_button": "Back to poll",
+  "history_heading": "Edit history",
+  "history_empty": "No edits yet",
+  "history_checked": "checked",
+  "history_unchecked": "unchecked",
+  "history_field_title": "title",
+  "history_field_description": "description",
+  "history_field_option": "option"
 }

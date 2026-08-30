@@ -7,11 +7,16 @@
     yoptionTexts,
     yoptionOrder,
     yoptionVotes,
+    yeditLog,
     selfId,
     selfName,
     syncNow,
+    logEdit,
+    type EditLogEntry,
+    type EditField,
   } from "./yjs-sync";
   import { m } from "./paraglide/messages.js";
+  import { getLocale } from "./paraglide/runtime.js";
   import { draggable, droppable, type DragDropState } from "@thisux/sveltednd";
   import { bindYText } from "./yjs-textarea";
 
@@ -47,6 +52,30 @@
     document.documentElement.classList.toggle("dark", dark);
     localStorage.setItem(THEME_KEY, String(dark));
   });
+
+  let view = $state<"poll" | "history">("poll");
+
+  let editLog = $state<EditLogEntry[]>(yeditLog.toArray());
+  yeditLog.observe(() => {
+    editLog = yeditLog.toArray();
+  });
+
+  const historyDateFormat = new Intl.DateTimeFormat(getLocale(), {
+    dateStyle: "short",
+    timeStyle: "short",
+  });
+
+  function editFieldLabel(field: EditField): string {
+    switch (field.kind) {
+      case "title":
+        return m.history_field_title();
+      case "description":
+        return m.history_field_description();
+      case "option":
+        return m.history_field_option();
+    }
+  }
+
 
   function optionYText(id: string): Y.Text {
     const ytext = yoptionTexts.get(id);
@@ -129,13 +158,31 @@
   function toggleVote(id: string) {
     const votes = yoptionVotes.get(id);
     if (!votes) return;
+    const optionLabel = optionYText(id).toString();
     ydoc.transact(() => {
       if (votes.has(selfId)) {
         votes.delete(selfId);
+        logEdit({ kind: "deselect", optionLabel });
       } else {
         votes.set(selfId, selfName);
+        logEdit({ kind: "select", optionLabel });
       }
     });
+    syncNow();
+  }
+
+  function commitTitleEdit(oldValue: string, newValue: string) {
+    logEdit({ kind: "edit", field: { kind: "title" }, oldValue, newValue });
+    syncNow();
+  }
+
+  function commitDescriptionEdit(oldValue: string, newValue: string) {
+    logEdit({ kind: "edit", field: { kind: "description" }, oldValue, newValue });
+    syncNow();
+  }
+
+  function commitOptionEdit(oldValue: string, newValue: string) {
+    logEdit({ kind: "edit", field: { kind: "option" }, oldValue, newValue });
     syncNow();
   }
 
@@ -166,142 +213,194 @@
     <button class="text-sm" onclick={() => (dark = !dark)}>
       {dark ? "🌙" : "☀️"}
     </button>
+    <button
+      class="text-sm"
+      aria-label={view === "history" ? m.history_back_button() : m.history_view_button()}
+      onclick={() => (view = view === "history" ? "poll" : "history")}
+    >
+      {view === "history" ? "←" : "⏳"}
+    </button>
   </div>
 
-  <div class="flex flex-row items-center gap-2 px-4">
-    <textarea
-      class="grow resize-none overflow-hidden text-xl font-bold break-words whitespace-pre-wrap outline-none focus:ring-2 focus:ring-blue-500"
-      rows="1"
-      use:bindYText={ytitle}
-      use:autogrow
-      placeholder={m.title_placeholder()}
-    ></textarea>
-  </div>
+  {#if view === "history"}
+    <div class="flex flex-col gap-2 px-4">
+      <h2 class="font-bold">{m.history_heading()}</h2>
+      {#if editLog.length === 0}
+        <p class="text-sm text-neutral-500 dark:text-neutral-400">{m.history_empty()}</p>
+      {:else}
+        <ul class="flex flex-col gap-3 text-sm">
+          {#each [...editLog].reverse() as entry, index (editLog.length - index)}
+            <li class="flex flex-col gap-1">
+              <div class="flex flex-row items-center gap-2 text-xs text-neutral-500 dark:text-neutral-400">
+                <span>{historyDateFormat.format(entry.at)}</span>
+                <span class="font-medium text-black dark:text-neutral-100">{entry.userName}</span>
+                {#if entry.action.kind === "edit"}
+                  <span class="ml-auto">{editFieldLabel(entry.action.field)} ✏️</span>
+                {:else}
+                  <span class="ml-auto"
+                    >{entry.action.kind === "select" ? m.history_checked() : m.history_unchecked()}
+                    {entry.action.kind === "select" ? "✅" : "⭕"}</span
+                  >
+                {/if}
+              </div>
+              {#if entry.action.kind === "edit"}
+                <div
+                  class="rounded bg-red-100 px-1 break-words whitespace-pre-wrap text-red-900 dark:bg-red-950 dark:text-red-200"
+                >
+                  {entry.action.oldValue}
+                </div>
+                <div
+                  class="rounded bg-green-100 px-1 break-words whitespace-pre-wrap text-green-900 dark:bg-green-950 dark:text-green-200"
+                >
+                  {entry.action.newValue}
+                </div>
+              {:else}
+                <div>{entry.action.optionLabel}</div>
+              {/if}
+            </li>
+          {/each}
+        </ul>
+      {/if}
+    </div>
+  {:else}
+    <div class="flex flex-row items-center gap-2 px-4">
+      <textarea
+        class="grow resize-none overflow-hidden text-xl font-bold break-words whitespace-pre-wrap outline-none focus:ring-2 focus:ring-blue-500"
+        rows="1"
+        use:bindYText={{ yText: ytitle, onCommit: commitTitleEdit }}
+        use:autogrow
+        placeholder={m.title_placeholder()}
+      ></textarea>
+    </div>
 
-  <div class="flex flex-row items-center gap-2 px-4">
-    <textarea
-      class="grow resize-none overflow-hidden break-words whitespace-pre-wrap outline-none focus:ring-2 focus:ring-blue-500"
-      rows="1"
-      use:bindYText={ydescription}
-      use:autogrow
-      placeholder={m.description_placeholder()}
-    ></textarea>
-  </div>
+    <div class="flex flex-row items-center gap-2 px-4">
+      <textarea
+        class="grow resize-none overflow-hidden break-words whitespace-pre-wrap outline-none focus:ring-2 focus:ring-blue-500"
+        rows="1"
+        use:bindYText={{ yText: ydescription, onCommit: commitDescriptionEdit }}
+        use:autogrow
+        placeholder={m.description_placeholder()}
+      ></textarea>
+    </div>
 
-  <ul class="flex flex-col gap-4 pt-4">
-    {#each options as option, index (option.id)}
-      <li
-        class="flex flex-col gap-1 px-2"
-        use:draggable={{
-          container: index.toString(),
-          dragData: option,
-          handle: ".option-drag-handle",
-        }}
-        use:droppable={{
-          container: index.toString(),
-          callbacks: { onDrop: handleOptionDrop },
-        }}
-      >
-        <div class="flex flex-row items-center">
-          <span
-            class="option-drag-handle cursor-grab self-start text-neutral-400"
-          >
-            <svg width="17" height="28" viewBox="-1.5 -1.5 12 18">
-              <circle cx="1.5" cy="1.5" r="1.3" fill="currentColor" />
-              <circle cx="7.5" cy="1.5" r="1.3" fill="currentColor" />
-              <circle cx="1.5" cy="7.5" r="1.3" fill="currentColor" />
-              <circle cx="7.5" cy="7.5" r="1.3" fill="currentColor" />
-              <circle cx="1.5" cy="13.5" r="1.3" fill="currentColor" />
-              <circle cx="7.5" cy="13.5" r="1.3" fill="currentColor" />
-            </svg>
-          </span>
-          <button
-            class="self-start ml-1"
-            aria-label={myVotes[option.id] ? "Remove vote" : "Vote"}
-            onclick={() => toggleVote(option.id)}
-          >
-            {#if myVotes[option.id]}
-              <svg
-                class="text-blue-500"
-                width="28"
-                height="28"
-                viewBox="0 0 16 16"
-              >
-                <circle cx="8" cy="8" r="7" fill="currentColor" />
-                <path
-                  d="M5 8.5l2 2 4-5"
-                  fill="none"
-                  stroke="white"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                />
-              </svg>
-            {:else}
-              <svg
-                class="text-neutral-300 dark:text-neutral-600"
-                width="28"
-                height="28"
-                viewBox="0 0 16 16"
-              >
-                <circle
-                  cx="8"
-                  cy="8"
-                  r="6"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                />
-              </svg>
-            {/if}
-          </button>
-          <textarea
-            class="grow resize-none overflow-hidden break-words whitespace-pre-wrap outline-none focus:ring-2 focus:ring-blue-500 ml-2"
-            rows="1"
-            use:bindYText={optionYText(option.id)}
-            use:autogrow
-            placeholder={m.option_placeholder()}
-          ></textarea>
-          {#if option.text.trim() === ""}
-            <button
-              class="self-start px-1"
-              onclick={() => deleteOption(option.id)}>🗑️</button
-            >
-          {/if}
-        </div>
-        <div class="flex h-2.5 flex-row">
-          <div
-            class="rounded-l-full bg-blue-500"
-            class:rounded-r-full={votePercent(option.id) === 100}
-            style="flex-grow: {votePercent(option.id)}"
-          ></div>
-          <div
-            class="rounded-r-full bg-blue-200 dark:bg-blue-950"
-            class:rounded-l-full={votePercent(option.id) === 0}
-            style="flex-grow: {100 - votePercent(option.id)}"
-          ></div>
-        </div>
-        <div
-          class="flex flex-row items-center gap-2 text-sm text-neutral-600 dark:text-neutral-400"
+    <ul class="flex flex-col gap-4 pt-4">
+      {#each options as option, index (option.id)}
+        <li
+          class="flex flex-col gap-1 px-2"
+          use:draggable={{
+            container: index.toString(),
+            dragData: option,
+            handle: ".option-drag-handle",
+          }}
+          use:droppable={{
+            container: index.toString(),
+            callbacks: { onDrop: handleOptionDrop },
+          }}
         >
-          <span class="grow">{voteNames[option.id]?.join(", ") ?? ""}</span>
-          <span class="self-start whitespace-nowrap"
-            >{voteCount(option.id)}/{totalVoterCount} ({votePercent(
-              option.id,
-            )}%)</span
+          <div class="flex flex-row items-center">
+            <span
+              class="option-drag-handle cursor-grab self-start text-neutral-400"
+            >
+              <svg width="17" height="28" viewBox="-1.5 -1.5 12 18">
+                <circle cx="1.5" cy="1.5" r="1.3" fill="currentColor" />
+                <circle cx="7.5" cy="1.5" r="1.3" fill="currentColor" />
+                <circle cx="1.5" cy="7.5" r="1.3" fill="currentColor" />
+                <circle cx="7.5" cy="7.5" r="1.3" fill="currentColor" />
+                <circle cx="1.5" cy="13.5" r="1.3" fill="currentColor" />
+                <circle cx="7.5" cy="13.5" r="1.3" fill="currentColor" />
+              </svg>
+            </span>
+            <button
+              class="self-start ml-1"
+              aria-label={myVotes[option.id] ? "Remove vote" : "Vote"}
+              onclick={() => toggleVote(option.id)}
+            >
+              {#if myVotes[option.id]}
+                <svg
+                  class="text-blue-500"
+                  width="28"
+                  height="28"
+                  viewBox="0 0 16 16"
+                >
+                  <circle cx="8" cy="8" r="7" fill="currentColor" />
+                  <path
+                    d="M5 8.5l2 2 4-5"
+                    fill="none"
+                    stroke="white"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              {:else}
+                <svg
+                  class="text-neutral-300 dark:text-neutral-600"
+                  width="28"
+                  height="28"
+                  viewBox="0 0 16 16"
+                >
+                  <circle
+                    cx="8"
+                    cy="8"
+                    r="6"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  />
+                </svg>
+              {/if}
+            </button>
+            <textarea
+              class="grow resize-none overflow-hidden break-words whitespace-pre-wrap outline-none focus:ring-2 focus:ring-blue-500 ml-2"
+              rows="1"
+              use:bindYText={{
+                yText: optionYText(option.id),
+                onCommit: commitOptionEdit,
+              }}
+              use:autogrow
+              placeholder={m.option_placeholder()}
+            ></textarea>
+            {#if option.text.trim() === ""}
+              <button
+                class="self-start px-1"
+                onclick={() => deleteOption(option.id)}>🗑️</button
+              >
+            {/if}
+          </div>
+          <div class="flex h-2.5 flex-row">
+            <div
+              class="rounded-l-full bg-blue-500"
+              class:rounded-r-full={votePercent(option.id) === 100}
+              style="flex-grow: {votePercent(option.id)}"
+            ></div>
+            <div
+              class="rounded-r-full bg-blue-200 dark:bg-blue-950"
+              class:rounded-l-full={votePercent(option.id) === 0}
+              style="flex-grow: {100 - votePercent(option.id)}"
+            ></div>
+          </div>
+          <div
+            class="flex flex-row items-center gap-2 text-sm text-neutral-600 dark:text-neutral-400"
           >
-        </div>
-      </li>
-    {/each}
-  </ul>
+            <span class="grow">{voteNames[option.id]?.join(", ") ?? ""}</span>
+            <span class="self-start whitespace-nowrap"
+              >{voteCount(option.id)}/{totalVoterCount} ({votePercent(
+                option.id,
+              )}%)</span
+            >
+          </div>
+        </li>
+      {/each}
+    </ul>
 
-  <button
-    class="self-center px-2 py-1 disabled:opacity-50"
-    onclick={addOption}
-    aria-label="Add option"
-  >
-    <svg class="text-blue-500" width="24" height="24" viewBox="0 0 16 16">
-      <path d="M6 2h4v4h4v4h-4v4h-4v-4h-4v-4h4v-4z" fill="currentColor" />
-    </svg>
-  </button>
+    <button
+      class="self-center px-2 py-1 disabled:opacity-50"
+      onclick={addOption}
+      aria-label="Add option"
+    >
+      <svg class="text-blue-500" width="24" height="24" viewBox="0 0 16 16">
+        <path d="M6 2h4v4h4v4h-4v4h-4v-4h-4v-4h4v-4z" fill="currentColor" />
+      </svg>
+    </button>
+  {/if}
 </main>

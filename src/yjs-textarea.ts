@@ -23,16 +23,16 @@ function diffRange(oldStr: string, newStr: string) {
   return { start, oldEnd, newEnd };
 }
 
-// Binds a `Y.Text` directly to a <textarea>, applying only the minimal
-// insert/delete implied by each `input` event (instead of replacing the
-// whole text) so concurrent edits from other peers merge correctly instead
-// of clobbering each other.
-//
-// Dispatches a synthetic `input` event whenever it sets `node.value`
-// programmatically (i.e. from a remote change), so unrelated listeners that
-// only react to native `input` events — like an autogrow action — stay in
-// sync without this binding knowing about them.
-export function bindYText(node: HTMLTextAreaElement, yText: Y.Text) {
+export interface BindYTextOptions {
+  yText: Y.Text;
+  onCommit?(oldValue: string, newValue: string): void;
+}
+
+export function bindYText(
+  node: HTMLTextAreaElement,
+  options: BindYTextOptions,
+) {
+  const { yText, onCommit } = options;
   const doc = yText.doc;
   if (!doc) throw new Error("yText has no doc");
 
@@ -89,11 +89,29 @@ export function bindYText(node: HTMLTextAreaElement, yText: Y.Text) {
   };
   node.addEventListener("input", onInput);
 
+  let valueAtFocus: string | null = null;
+  const onFocus = () => {
+    valueAtFocus = yText.toString();
+  };
+  const commitIfChanged = () => {
+    if (valueAtFocus === null) return;
+    const newValue = yText.toString();
+    if (newValue !== valueAtFocus) onCommit?.(valueAtFocus, newValue);
+    valueAtFocus = null;
+  };
+  node.addEventListener("focus", onFocus);
+  node.addEventListener("blur", commitIfChanged);
+
   return {
     destroy() {
+      // Commit a pending edit session if the field is removed while still
+      // focused (e.g. its option gets deleted) instead of dropping it.
+      commitIfChanged();
       doc.off("beforeTransaction", onBeforeTransaction);
       yText.unobserve(onYTextChange);
       node.removeEventListener("input", onInput);
+      node.removeEventListener("focus", onFocus);
+      node.removeEventListener("blur", commitIfChanged);
     },
   };
 }

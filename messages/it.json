@@ -13,5 +13,14 @@
         "countPlural=other": "{count} voti"
       }
     }
-  ]
+  ],
+  "history_view_button": "Visualizza cronologia modifiche",
+  "history_back_button": "Torna al sondaggio",
+  "history_heading": "Cronologia modifiche",
+  "history_empty": "Nessuna modifica ancora",
+  "history_checked": "selezionata",
+  "history_unchecked": "deselezionata",
+  "history_field_title": "titolo",
+  "history_field_description": "descrizione",
+  "history_field_option": "opzione"
 }

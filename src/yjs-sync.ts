@@ -7,15 +7,39 @@ export const ytitle = ydoc.getText("title");
 export const ydescription = ydoc.getText("description");
 export const yoptionTexts = ydoc.getMap<Y.Text>("optionTexts");
 export const yoptionOrder = ydoc.getArray<string>("optionOrder");
-// Per option, a set of voter ids emulated as a `Y.Map<voterId, name>` (Yjs has no
-// Set type); the value is the voter's display name at the time they voted, so it
-// doubles as the set membership check (`.has(id)`) and the label to show for it.
 export const yoptionVotes = ydoc.getMap<Y.Map<string>>("optionVotes");
 
 // Trusting clients to only vote as themselves through this UI; webxdc gives
 // receivers no authenticated sender info to verify that server-side.
 export const selfId = window.webxdc?.selfAddr ?? "local";
 export const selfName = window.webxdc?.selfName ?? "You";
+
+// Field/option labels are stored as data (not pre-localized text), so every
+// peer's history screen renders each entry in its own locale.
+export type EditField =
+  | { kind: "title" }
+  | { kind: "description" }
+  | { kind: "option" };
+
+export type EditAction =
+  | { kind: "select"; optionLabel: string }
+  | { kind: "deselect"; optionLabel: string }
+  | { kind: "edit"; field: EditField; oldValue: string; newValue: string };
+
+export interface EditLogEntry {
+  at: number;
+  userId: string;
+  userName: string;
+  action: EditAction;
+}
+
+export const yeditLog = ydoc.getArray<EditLogEntry>("editLog");
+
+export function logEdit(action: EditAction) {
+  yeditLog.push([
+    { at: Date.now(), userId: selfId, userName: selfName, action },
+  ]);
+}
 
 function totalVoterCount(): number {
   const voters = new Set<string>();
@@ -26,10 +50,6 @@ function totalVoterCount(): number {
   return voters.size;
 }
 
-// Without this, WebxdcProvider falls back to webxdc.sendUpdateInterval (or
-// 10s if the host doesn't expose one) — fine as a ceiling, but too long a
-// delay for text edits to feel synced. Votes and option add/delete/reorder
-// bypass this entirely via `syncNow()` below.
 const TEXT_EDIT_AUTOSAVE_MS = 3000;
 
 const provider = window.webxdc
@@ -47,9 +67,6 @@ const provider = window.webxdc
     })
   : undefined;
 
-// Votes and option add/delete/reorder are discrete, deliberate actions —
-// worth showing to other peers right away instead of waiting for the
-// periodic autosave that WebxdcProvider otherwise uses to batch typing.
 export function syncNow() {
   provider?.syncToChatPeers();
 }
