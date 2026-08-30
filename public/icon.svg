@@ -5,7 +5,6 @@
       <stop offset="1" stop-color="#ff179e" />
     </linearGradient>
   </defs>
-  <rect x="0" y="0" width="256" height="256" fill="#262626" />
   <rect x="30" y="108" width="52" height="105" rx="14" fill="url(#bars)" />
   <rect x="102" y="28" width="52" height="185" rx="14" fill="url(#bars)" />
   <rect x="174" y="68" width="52" height="145" rx="14" fill="url(#bars)" />
