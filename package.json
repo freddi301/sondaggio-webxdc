@@ -9,7 +9,8 @@
     "preview": "vite preview",
     "check": "svelte-check --tsconfig ./tsconfig.app.json && tsc -p tsconfig.node.json",
     "simulate": "webxdc-dev run http://localhost:5173",
-    "pack": "vite build && rm -f sondaggio.xdc && cd dist && zip -rX ../sondaggio.xdc . && cd .."
+    "pack": "vite build && rm -f sondaggio.xdc && cd dist && zip -rX ../sondaggio.xdc . && cd ..",
+    "release": "bash scripts/release.sh"
   },
   "devDependencies": {
     "@inlang/paraglide-js": "^2.23.1",
