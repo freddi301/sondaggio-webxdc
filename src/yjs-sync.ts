@@ -8,14 +8,11 @@ export const ydescription = ydoc.getText("description");
 export const yoptionTexts = ydoc.getMap<Y.Text>("optionTexts");
 export const yoptionOrder = ydoc.getArray<string>("optionOrder");
 export const yoptionVotes = ydoc.getMap<Y.Map<string>>("optionVotes");
+export const yopeners = ydoc.getMap<boolean>("openers");
 
-// Trusting clients to only vote as themselves through this UI; webxdc gives
-// receivers no authenticated sender info to verify that server-side.
 export const selfId = window.webxdc?.selfAddr ?? "local";
 export const selfName = window.webxdc?.selfName ?? "You";
 
-// Field/option labels are stored as data (not pre-localized text), so every
-// peer's history screen renders each entry in its own locale.
 export type EditField =
   | { kind: "title" }
   | { kind: "description" }
@@ -69,4 +66,11 @@ const provider = window.webxdc
 
 export function syncNow() {
   provider?.syncToChatPeers();
+}
+
+if (!yopeners.has(selfId)) {
+  setTimeout(() => {
+    yopeners.set(selfId, true);
+    syncNow();
+  }, 2000);
 }

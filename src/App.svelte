@@ -7,6 +7,7 @@
     yoptionTexts,
     yoptionOrder,
     yoptionVotes,
+    yopeners,
     yeditLog,
     selfId,
     selfName,
@@ -123,6 +124,11 @@
     syncNow();
   }
 
+  let totalOpenedCount = $state(yopeners.size);
+  yopeners.observe(() => {
+    totalOpenedCount = yopeners.size;
+  });
+
   let voteNames = $state<Record<string, string[]>>({});
   let myVotes = $state<Record<string, boolean>>({});
   let totalVoterCount = $state(0);
@@ -145,6 +151,11 @@
   yoptionVotes.observeDeep(syncVotes);
   yoptionOrder.observe(syncVotes);
   syncVotes();
+
+  // What share of the people who opened the poll went on to vote.
+  let openedVotePercent = $derived(
+    totalOpenedCount === 0 ? 0 : Math.round((totalVoterCount / totalOpenedCount) * 100),
+  );
 
   function voteCount(id: string): number {
     return voteNames[id]?.length ?? 0;
@@ -283,7 +294,28 @@
       ></textarea>
     </div>
 
-    <ul class="flex flex-col gap-4 pt-4">
+    <div class="flex flex-row items-center gap-2 px-4">
+      <span class="text-sm whitespace-nowrap text-neutral-600 dark:text-neutral-400"
+        >✅ {totalVoterCount}</span
+      >
+      <div class="flex h-2.5 grow flex-row">
+        <div
+          class="rounded-l-full bg-blue-500"
+          class:rounded-r-full={openedVotePercent === 100}
+          style="flex-grow: {openedVotePercent}"
+        ></div>
+        <div
+          class="rounded-r-full bg-blue-200 dark:bg-blue-950"
+          class:rounded-l-full={openedVotePercent === 0}
+          style="flex-grow: {100 - openedVotePercent}"
+        ></div>
+      </div>
+      <span class="text-sm whitespace-nowrap text-neutral-600 dark:text-neutral-400"
+        >{totalOpenedCount} 👁️</span
+      >
+    </div>
+
+    <ul class="flex flex-col gap-4 pt-2">
       {#each options as option, index (option.id)}
         <li
           class="flex flex-col gap-1 px-2"
