@@ -9,6 +9,9 @@ export const yoptionTexts = ydoc.getMap<Y.Text>("optionTexts");
 export const yoptionOrder = ydoc.getArray<string>("optionOrder");
 export const yoptionVotes = ydoc.getMap<Y.Map<string>>("optionVotes");
 export const yopeners = ydoc.getMap<boolean>("openers");
+// Per-voter preference: show their real name in the votes list, or a 🥷
+// placeholder. Keyed by userId, defaults to true (shown) when absent.
+export const yshowName = ydoc.getMap<boolean>("showName");
 
 export const selfId = window.webxdc?.selfAddr ?? "local";
 export const selfName = window.webxdc?.selfName ?? "You";

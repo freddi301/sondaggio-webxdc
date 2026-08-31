@@ -22,5 +22,7 @@
   "history_unchecked": "deselezionata",
   "history_field_title": "titolo",
   "history_field_description": "descrizione",
-  "history_field_option": "opzione"
+  "history_field_option": "opzione",
+  "show_votes_label": "Mostra voti",
+  "show_my_name_label": "Mostra il mio nome"
 }

@@ -22,5 +22,7 @@
   "history_unchecked": "unchecked",
   "history_field_title": "title",
   "history_field_description": "description",
-  "history_field_option": "option"
+  "history_field_option": "option",
+  "show_votes_label": "Show votes",
+  "show_my_name_label": "Show my name"
 }
