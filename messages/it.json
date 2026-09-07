@@ -14,8 +14,8 @@
       }
     }
   ],
+  "poll_view_button": "Visualizza sondaggio",
   "history_view_button": "Visualizza cronologia modifiche",
-  "history_back_button": "Torna al sondaggio",
   "history_heading": "Cronologia modifiche",
   "history_empty": "Nessuna modifica ancora",
   "history_checked": "selezionata",
@@ -24,5 +24,22 @@
   "history_field_description": "descrizione",
   "history_field_option": "opzione",
   "show_votes_label": "Mostra voti",
-  "show_my_name_label": "Mostra il mio nome"
+  "show_my_name_label": "Mostra il mio nome",
+  "info_view_button": "Informazioni sull'app",
+  "info_intro": "Questa è un'app per fare sondaggi.",
+  "info_features_heading": "Cosa puoi fare",
+  "info_feature_edit": "Chiunque può modificare il titolo, la descrizione e qualsiasi opzione.",
+  "info_feature_add": "Chiunque può aggiungere altre opzioni con il pulsante ➕.",
+  "info_feature_delete": "Per eliminare un'opzione cancella tutto il testo e premi 🗑️.",
+  "info_feature_reorder": "Per riordinare le opzioni trascina ⠿.",
+  "info_feature_vote": "Vota quante opzioni vuoi e cambia i tuoi voti in qualsiasi momento.",
+  "info_feature_anon": "Disattiva [Mostra il mio nome] per votare in modo anonimo. Al posto del tuo nome verrà visualizzato un 🥷.",
+  "info_feature_votes": "Attiva [Mostra voti] per vedere chi ha votato cosa e i conteggi aggiornati. Non guardare i voti prima di votare, per non influenzare il tuo giudizio.",
+  "info_feature_voter_count": "✅ indica quante persone hanno votato almeno 1 opzione.",
+  "info_feature_viewer_count": "👁️ indica quante persone hanno visto il sondaggio.",
+  "info_feature_history": "Apri la cronologia ⏳ per vedere tutte le modifiche e i cambi di voto nel tempo.",
+  "info_tip_theme": "Cambia il tema premendo ☀️ / 🌙.",
+  "info_tip_reread": "Per rileggere il manuale premi ℹ️.",
+  "info_tip_vote": "Per tornare a votare premi 🗳️.",
+  "info_start_button": "Inizia"
 }

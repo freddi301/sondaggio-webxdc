@@ -9,18 +9,16 @@
     yoptionVotes,
     yopeners,
     yshowName,
-    yeditLog,
     selfId,
     selfName,
     syncNow,
     logEdit,
-    type EditLogEntry,
-    type EditField,
   } from "./yjs-sync";
   import { m } from "./paraglide/messages.js";
-  import { getLocale } from "./paraglide/runtime.js";
   import { draggable, droppable, type DragDropState } from "@thisux/sveltednd";
   import { bindYText } from "./yjs-textarea";
+  import HistoryScreen from "./HistoryScreen.svelte";
+  import InfoScreen from "./InfoScreen.svelte";
 
   interface Option {
     id: string;
@@ -60,42 +58,18 @@
     localStorage.setItem(THEME_KEY, String(dark));
   });
 
-  let view = $state<"poll" | "history">("poll");
+  const INFO_SEEN_KEY = "sondaggio-info-seen";
+  const infoSeen = localStorage.getItem(INFO_SEEN_KEY) === "true";
+  if (!infoSeen) localStorage.setItem(INFO_SEEN_KEY, "true");
 
-  let editLog = $state<EditLogEntry[]>(yeditLog.toArray());
-  yeditLog.observe(() => {
-    editLog = yeditLog.toArray();
-  });
-  // Anonymization is a live preference, not baked into the logged entry —
-  // re-render the log whenever anyone's changes so it stays current.
-  yshowName.observe(() => {
-    editLog = [...editLog];
-  });
+  type View = "poll" | "history" | "info";
+  let view = $state<View>(infoSeen ? "poll" : "info");
 
-  const historyDateFormat = new Intl.DateTimeFormat(getLocale(), {
-    dateStyle: "short",
-    timeStyle: "short",
-  });
-
-  // Only select/deselect entries respect the "show my name" preference —
-  // consistent with the votes list itself, which they're a log of.
-  function historyVoter(entry: EditLogEntry): Voter {
-    if (entry.action.kind === "edit") return { name: entry.userName, anonymous: false };
-    const shown = yshowName.get(entry.userId) ?? true;
-    return { name: shown ? entry.userName : "🥷", anonymous: !shown };
-  }
-
-  function editFieldLabel(field: EditField): string {
-    switch (field.kind) {
-      case "title":
-        return m.history_field_title();
-      case "description":
-        return m.history_field_description();
-      case "option":
-        return m.history_field_option();
-    }
-  }
-
+  const tabs: { id: View; icon: string; label: () => string }[] = [
+    { id: "info", icon: "ℹ️", label: () => m.info_view_button() },
+    { id: "poll", icon: "🗳️", label: () => m.poll_view_button() },
+    { id: "history", icon: "⏳", label: () => m.history_view_button() },
+  ];
 
   function optionYText(id: string): Y.Text {
     const ytext = yoptionTexts.get(id);
@@ -261,67 +235,27 @@
   <div class="flex flex-row items-center gap-2 px-4">
     <img src="icon.svg" alt="" class="h-6 w-6 mb-1" />
     <span class="grow font-bold">{m.app_name()}</span>
+    {#each tabs as tab (tab.id)}
+      <button
+        class="border-b-4 px-1 text-sm {view === tab.id
+          ? 'border-blue-500 bg-blue-100 dark:bg-blue-900'
+          : 'border-transparent'}"
+        aria-current={view === tab.id ? "page" : undefined}
+        aria-label={tab.label()}
+        onclick={() => (view = tab.id)}
+      >
+        {tab.icon}
+      </button>
+    {/each}
     <button class="text-sm" onclick={() => (dark = !dark)}>
       {dark ? "🌙" : "☀️"}
-    </button>
-    <button
-      class="text-sm"
-      aria-label={view === "history" ? m.history_back_button() : m.history_view_button()}
-      onclick={() => (view = view === "history" ? "poll" : "history")}
-    >
-      {view === "history" ? "←" : "⏳"}
     </button>
   </div>
 
   {#if view === "history"}
-    <div class="flex flex-col gap-2 px-4">
-      <h2 class="font-bold">{m.history_heading()}</h2>
-      {#if editLog.length === 0}
-        <p class="text-sm text-neutral-500 dark:text-neutral-400">{m.history_empty()}</p>
-      {:else}
-        <ul class="flex flex-col gap-3 text-sm">
-          {#each [...editLog].reverse() as entry, index (editLog.length - index)}
-            <li class="flex flex-col gap-1">
-              <div class="flex flex-row items-center gap-2 text-xs text-neutral-500 dark:text-neutral-400">
-                <span>{historyDateFormat.format(entry.at)}</span>
-                {#if historyVoter(entry).anonymous}
-                  <span
-                    class="inline-flex items-center justify-center rounded-full border border-neutral-300 bg-white px-1"
-                    >{historyVoter(entry).name}</span
-                  >
-                {:else}
-                  <span class="font-medium text-black dark:text-neutral-100"
-                    >{historyVoter(entry).name}</span
-                  >
-                {/if}
-                {#if entry.action.kind === "edit"}
-                  <span class="ml-auto">{editFieldLabel(entry.action.field)} ✏️</span>
-                {:else}
-                  <span class="ml-auto"
-                    >{entry.action.kind === "select" ? m.history_checked() : m.history_unchecked()}
-                    {entry.action.kind === "select" ? "✅" : "⭕"}</span
-                  >
-                {/if}
-              </div>
-              {#if entry.action.kind === "edit"}
-                <div
-                  class="rounded bg-red-100 px-1 break-words whitespace-pre-wrap text-red-900 dark:bg-red-950 dark:text-red-200"
-                >
-                  {entry.action.oldValue}
-                </div>
-                <div
-                  class="rounded bg-green-100 px-1 break-words whitespace-pre-wrap text-green-900 dark:bg-green-950 dark:text-green-200"
-                >
-                  {entry.action.newValue}
-                </div>
-              {:else}
-                <div>{entry.action.optionLabel}</div>
-              {/if}
-            </li>
-          {/each}
-        </ul>
-      {/if}
-    </div>
+    <HistoryScreen />
+  {:else if view === "info"}
+    <InfoScreen onStart={() => (view = "poll")} />
   {:else}
     <div class="flex flex-row items-center gap-2 px-4">
       <textarea
@@ -490,7 +424,7 @@
                 {#if i > 0}<span>, </span>{/if}
                 {#if voter.anonymous}
                   <span
-                    class="inline-flex items-center justify-center rounded-full border border-neutral-300 bg-white px-1"
+                    class="inline-flex items-center justify-center rounded-full border border-neutral-300 bg-[#929292] px-1"
                     >{voter.name}</span
                   >
                 {:else}

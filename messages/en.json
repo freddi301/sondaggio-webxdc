@@ -14,8 +14,8 @@
       }
     }
   ],
+  "poll_view_button": "View poll",
   "history_view_button": "View edit history",
-  "history_back_button": "Back to poll",
   "history_heading": "Edit history",
   "history_empty": "No edits yet",
   "history_checked": "checked",
@@ -24,5 +24,22 @@
   "history_field_description": "description",
   "history_field_option": "option",
   "show_votes_label": "Show votes",
-  "show_my_name_label": "Show my name"
+  "show_my_name_label": "Show my name",
+  "info_view_button": "About this app",
+  "info_intro": "This is an app for making polls.",
+  "info_features_heading": "What you can do",
+  "info_feature_edit": "Anyone can edit the title, the description, and any option.",
+  "info_feature_add": "Anyone can add more options with the ➕ button.",
+  "info_feature_delete": "To delete an option, clear all its text and press 🗑️.",
+  "info_feature_reorder": "To reorder options, drag ⠿.",
+  "info_feature_vote": "Vote for as many options as you like, and change your votes at any time.",
+  "info_feature_anon": "Turn off [Show my name] to vote anonymously. A 🥷 is shown instead of your name.",
+  "info_feature_votes": "Turn on [Show votes] to reveal who voted for what and the running tallies. Don't look at the votes before you vote, so they don't sway your judgement.",
+  "info_feature_voter_count": "✅ shows how many people voted for at least one option.",
+  "info_feature_viewer_count": "👁️ shows how many people have seen the poll.",
+  "info_feature_history": "Open the history view ⏳ to see every edit and vote change over time.",
+  "info_tip_theme": "Switch the theme by pressing ☀️ / 🌙.",
+  "info_tip_reread": "To read this guide again, press ℹ️.",
+  "info_tip_vote": "To go back to voting, press 🗳️.",
+  "info_start_button": "Start"
 }
