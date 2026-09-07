@@ -20,6 +20,7 @@
     "@types/node": "^24.13.3",
     "@webxdc/types": "^2.2.0",
     "@webxdc/webxdc-dev": "^0.21.0",
+    "prettier-plugin-svelte": "^4.1.1",
     "svelte": "^5.56.8",
     "svelte-check": "^4.7.3",
     "tailwindcss": "^4.3.3",
