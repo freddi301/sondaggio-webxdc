@@ -7,7 +7,8 @@
   // strings; split them out so each can be rendered inside a rounded border.
   const CHIP_RE = /(➕|🗑️|⠿|⏳|☀️|🌙|ℹ️|🗳️|🥷|✅|👁️|\[[^\]]+\])/u;
 
-  const chipLabel = (part: string) => (part.startsWith("[") ? part.slice(1, -1) : part);
+  const chipLabel = (part: string) =>
+    part.startsWith("[") ? part.slice(1, -1) : part;
 </script>
 
 {#snippet line(text: string)}
@@ -22,7 +23,9 @@
 {/snippet}
 
 <div class="flex h-[calc(100dvh-4rem)] flex-col gap-3 pb-2 text-sm">
-  <div class="themed-scroll flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-4">
+  <div
+    class="themed-scroll flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-4"
+  >
     <p>{@render line(m.info_intro())}</p>
     <h3 class="font-bold">{m.info_features_heading()}</h3>
     <p>{@render line(m.info_feature_edit())}</p>

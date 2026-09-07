@@ -1,12 +1,7 @@
 @import "tailwindcss";
 
-/* Force `dark:` to be selector-based instead of `prefers-color-scheme`-based,
-   so it can be toggled explicitly instead of relying on the OS/browser. */
 @custom-variant dark (&:where(.dark, .dark *));
 
-/* @thisux/sveltednd ships this as dist/styles/dnd.css, but its package.json
-   "exports" only lists the "." entry, so the CSS subpath can't be imported —
-   hand-ported here instead. Drag/drop-position feedback classes only. */
 .svelte-dnd-draggable {
   touch-action: none;
   user-select: none;

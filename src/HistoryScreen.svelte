@@ -31,7 +31,8 @@
   // Only select/deselect entries respect the "show my name" preference —
   // consistent with the votes list itself, which they're a log of.
   function historyVoter(entry: EditLogEntry): Voter {
-    if (entry.action.kind === "edit") return { name: entry.userName, anonymous: false };
+    if (entry.action.kind === "edit")
+      return { name: entry.userName, anonymous: false };
     const shown = yshowName.get(entry.userId) ?? true;
     return { name: shown ? entry.userName : "🥷", anonymous: !shown };
   }
@@ -51,12 +52,16 @@
 <div class="flex flex-col gap-2 px-4">
   <h2 class="font-bold">{m.history_heading()}</h2>
   {#if editLog.length === 0}
-    <p class="text-sm text-neutral-500 dark:text-neutral-400">{m.history_empty()}</p>
+    <p class="text-sm text-neutral-500 dark:text-neutral-400">
+      {m.history_empty()}
+    </p>
   {:else}
     <ul class="flex flex-col gap-3 text-sm">
       {#each [...editLog].reverse() as entry, index (editLog.length - index)}
         <li class="flex flex-col gap-1">
-          <div class="flex flex-row items-center gap-2 text-xs text-neutral-500 dark:text-neutral-400">
+          <div
+            class="flex flex-row items-center gap-2 text-xs text-neutral-500 dark:text-neutral-400"
+          >
             <span>{historyDateFormat.format(entry.at)}</span>
             {#if historyVoter(entry).anonymous}
               <span
@@ -69,10 +74,14 @@
               >
             {/if}
             {#if entry.action.kind === "edit"}
-              <span class="ml-auto">{editFieldLabel(entry.action.field)} ✏️</span>
+              <span class="ml-auto"
+                >{editFieldLabel(entry.action.field)} ✏️</span
+              >
             {:else}
               <span class="ml-auto"
-                >{entry.action.kind === "select" ? m.history_checked() : m.history_unchecked()}
+                >{entry.action.kind === "select"
+                  ? m.history_checked()
+                  : m.history_unchecked()}
                 {entry.action.kind === "select" ? "✅" : "⭕"}</span
               >
             {/if}
