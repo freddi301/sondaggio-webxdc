@@ -1,5 +1,6 @@
 <script lang="ts">
   import * as Y from "yjs";
+  import { onDestroy } from "svelte";
   import {
     ydoc,
     ytitle,
@@ -7,6 +8,8 @@
     yoptionTexts,
     yoptionOrder,
     yoptionVotes,
+    ydotVotes,
+    type DotVote,
     yopeners,
     yshowName,
     selfId,
@@ -52,8 +55,12 @@
     return ytext;
   }
 
+  function orderedTextIds(): string[] {
+    return yoptionOrder.toArray().filter((id) => yoptionTexts.has(id));
+  }
+
   function readOptions(): Option[] {
-    return yoptionOrder.toArray().map((id) => ({
+    return orderedTextIds().map((id) => ({
       id,
       text: yoptionTexts.get(id)?.toString() ?? "",
     }));
@@ -62,21 +69,19 @@
   let options = $state<Option[]>(readOptions());
 
   function syncOptions() {
-    options = yoptionOrder.toArray().map((id) => {
+    options = orderedTextIds().map((id) => {
       const text = yoptionTexts.get(id)?.toString() ?? "";
       const existing = options.find((option) => option.id === id);
       return existing && existing.text === text ? existing : { id, text };
     });
   }
 
-  yoptionOrder.observe(syncOptions);
-  yoptionTexts.observeDeep(syncOptions);
-
   function addOption() {
     const id = crypto.randomUUID();
     ydoc.transact(() => {
       yoptionTexts.set(id, new Y.Text());
       yoptionVotes.set(id, new Y.Map<string>());
+      ydotVotes.set(id, new Y.Map<DotVote>());
       yoptionOrder.push([id]);
     });
     syncNow();
@@ -88,22 +93,22 @@
       if (index !== -1) yoptionOrder.delete(index, 1);
       yoptionTexts.delete(id);
       yoptionVotes.delete(id);
+      ydotVotes.delete(id);
     });
     syncNow();
   }
 
   let totalOpenedCount = $state(yopeners.size);
-  yopeners.observe(() => {
+  function syncOpened() {
     totalOpenedCount = yopeners.size;
-  });
+  }
 
-  // Local-only, resets to false on every launch — not persisted, not synced.
   let showVotes = $state(false);
 
   let showMyName = $state(yshowName.get(selfId) ?? true);
-  yshowName.observe(() => {
+  function syncShowMyName() {
     showMyName = yshowName.get(selfId) ?? true;
-  });
+  }
 
   function toggleShowMyName(checked: boolean) {
     ydoc.transact(() => {
@@ -139,17 +144,29 @@
     totalVoterCount = voters.size;
   }
 
+  syncVotes();
+
+  yoptionOrder.observe(syncOptions);
+  yoptionTexts.observeDeep(syncOptions);
+  yopeners.observe(syncOpened);
+  yshowName.observe(syncShowMyName);
   yoptionVotes.observeDeep(syncVotes);
   yoptionOrder.observe(syncVotes);
   yshowName.observe(syncVotes);
-  syncVotes();
+  onDestroy(() => {
+    yoptionOrder.unobserve(syncOptions);
+    yoptionTexts.unobserveDeep(syncOptions);
+    yopeners.unobserve(syncOpened);
+    yshowName.unobserve(syncShowMyName);
+    yoptionVotes.unobserveDeep(syncVotes);
+    yoptionOrder.unobserve(syncVotes);
+    yshowName.unobserve(syncVotes);
+  });
 
-  // What share of the people who opened the poll went on to vote.
-  let openedVotePercent = $derived(
-    totalOpenedCount === 0
-      ? 0
-      : Math.round((totalVoterCount / totalOpenedCount) * 100),
-  );
+  let openedVotePercent = $derived.by(() => {
+    const denom = Math.max(totalOpenedCount, totalVoterCount);
+    return denom === 0 ? 0 : Math.round((totalVoterCount / denom) * 100);
+  });
 
   function voteCount(id: string): number {
     return voteNames[id]?.length ?? 0;
@@ -215,22 +232,20 @@
 
 <div class="flex flex-row items-center gap-2 px-4">
   <textarea
-    class="grow resize-none overflow-hidden text-xl font-bold break-words whitespace-pre-wrap outline-none focus:ring-2 focus:ring-blue-500"
+    class="grow resize-none overflow-hidden text-xl font-bold wrap-break-word whitespace-pre-wrap outline-none focus:ring-2 focus:ring-blue-500"
     rows="1"
     use:bindYText={{ yText: ytitle, onCommit: commitTitleEdit }}
     use:autogrow
-    placeholder={m.title_placeholder()}
-  ></textarea>
+    placeholder={m.title_placeholder()}></textarea>
 </div>
 
 <div class="flex flex-row items-center gap-2 px-4">
   <textarea
-    class="grow resize-none overflow-hidden break-words whitespace-pre-wrap outline-none focus:ring-2 focus:ring-blue-500"
+    class="grow resize-none overflow-hidden wrap-break-word whitespace-pre-wrap outline-none focus:ring-2 focus:ring-blue-500"
     rows="1"
     use:bindYText={{ yText: ydescription, onCommit: commitDescriptionEdit }}
     use:autogrow
-    placeholder={m.description_placeholder()}
-  ></textarea>
+    placeholder={m.description_placeholder()}></textarea>
 </div>
 
 <div
@@ -257,7 +272,14 @@
   <span class="text-sm whitespace-nowrap text-neutral-600 dark:text-neutral-400"
     >✅ {totalVoterCount}</span
   >
-  <div class="flex h-2.5 grow flex-row">
+  <div
+    class="flex h-2.5 grow flex-row"
+    role="progressbar"
+    aria-label={m.turnout_bar_label()}
+    aria-valuemin="0"
+    aria-valuemax="100"
+    aria-valuenow={openedVotePercent}
+  >
     <div
       class="rounded-l-full bg-blue-500"
       class:rounded-r-full={openedVotePercent === 100}
@@ -299,7 +321,9 @@
         </span>
         <button
           class="self-start ml-1"
-          aria-label={myVotes[option.id] ? "Remove vote" : "Vote"}
+          aria-label={myVotes[option.id]
+            ? m.remove_vote_label()
+            : m.vote_label()}
           onclick={() => toggleVote(option.id)}
         >
           {#if myVotes[option.id]}
@@ -338,15 +362,14 @@
           {/if}
         </button>
         <textarea
-          class="grow resize-none overflow-hidden break-words whitespace-pre-wrap outline-none focus:ring-2 focus:ring-blue-500 ml-2"
+          class="grow resize-none overflow-hidden wrap-break-word whitespace-pre-wrap outline-none focus:ring-2 focus:ring-blue-500 ml-2"
           rows="1"
           use:bindYText={{
             yText: optionYText(option.id),
             onCommit: commitOptionEdit,
           }}
           use:autogrow
-          placeholder={m.option_placeholder()}
-        ></textarea>
+          placeholder={m.option_placeholder()}></textarea>
         {#if option.text.trim() === ""}
           <button
             class="self-start px-1"
@@ -357,6 +380,11 @@
       <div
         class="flex h-2.5 flex-row"
         style:visibility={showVotes ? "visible" : "hidden"}
+        role="progressbar"
+        aria-label={option.text || m.option_result_bar_label()}
+        aria-valuemin="0"
+        aria-valuemax="100"
+        aria-valuenow={votePercent(option.id)}
       >
         <div
           class="rounded-l-full bg-blue-500"
@@ -399,7 +427,7 @@
 <button
   class="self-center px-2 py-1 disabled:opacity-50"
   onclick={addOption}
-  aria-label="Add option"
+  aria-label={m.add_option_label()}
 >
   <svg class="text-blue-500" width="24" height="24" viewBox="0 0 16 16">
     <path d="M6 2h4v4h4v4h-4v4h-4v-4h-4v-4h4v-4z" fill="currentColor" />

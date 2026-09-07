@@ -1,11 +1,7 @@
 <script lang="ts">
   import { m } from "./paraglide/messages.js";
 
-  let { onStart }: { onStart: () => void } = $props();
-
-  // Icons and [bracketed UI labels] are embedded directly in the translated
-  // strings; split them out so each can be rendered inside a rounded border.
-  const CHIP_RE = /(➕|🗑️|⠿|⏳|☀️|🌙|ℹ️|🗳️|🥷|✅|👁️|\[[^\]]+\])/u;
+  const CHIP_RE = /(➕|🗑️|⠿|▲|▼|⏳|☀️|🌙|ℹ️|🗳️|🪙|🥷|✅|👁️|\[[^\]]+\])/u;
 
   const chipLabel = (part: string) =>
     part.startsWith("[") ? part.slice(1, -1) : part;
@@ -26,8 +22,7 @@
   <div
     class="themed-scroll flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-4"
   >
-    <p>{@render line(m.info_intro())}</p>
-    <h3 class="font-bold">{m.info_features_heading()}</h3>
+    <h2 class="font-bold">{m.info_polls_heading()}</h2>
     <p>{@render line(m.info_feature_edit())}</p>
     <p>{@render line(m.info_feature_add())}</p>
     <p>{@render line(m.info_feature_delete())}</p>
@@ -38,14 +33,15 @@
     <p>{@render line(m.info_feature_voter_count())}</p>
     <p>{@render line(m.info_feature_viewer_count())}</p>
     <p>{@render line(m.info_feature_history())}</p>
+    <p>{@render line(m.info_polls_goto())}</p>
+
+    <h2 class="font-bold">{m.info_dotvoting_heading()}</h2>
+    <p>{@render line(m.info_feature_dotvoting())}</p>
+    <p>{@render line(m.info_dotvoting_options())}</p>
+    <p>{@render line(m.info_dotvoting_goto())}</p>
+
+    <h2 class="font-bold">{m.info_other_heading()}</h2>
     <p>{@render line(m.info_tip_theme())}</p>
     <p>{@render line(m.info_tip_reread())}</p>
-    <p>{@render line(m.info_tip_vote())}</p>
   </div>
-  <button
-    class="mt-2 shrink-0 self-center rounded-full bg-blue-500 px-6 py-2 font-bold text-white"
-    onclick={onStart}
-  >
-    {m.info_start_button()}
-  </button>
 </div>

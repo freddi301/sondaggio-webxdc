@@ -3,10 +3,10 @@
   import HistoryScreen from "./HistoryScreen.svelte";
   import InfoScreen from "./InfoScreen.svelte";
   import VotingScreen from "./VotingScreen.svelte";
+  import DotVotingScreen from "./DotVotingScreen.svelte";
 
   const THEME_KEY = "sondaggio-dark";
 
-  // The destination browser can't tell us the real preference, so default to dark.
   let dark = $state(localStorage.getItem(THEME_KEY) !== "false");
 
   $effect(() => {
@@ -18,12 +18,13 @@
   const infoSeen = localStorage.getItem(INFO_SEEN_KEY) === "true";
   if (!infoSeen) localStorage.setItem(INFO_SEEN_KEY, "true");
 
-  type View = "poll" | "history" | "info";
+  type View = "poll" | "dots" | "history" | "info";
   let view = $state<View>(infoSeen ? "poll" : "info");
 
   const tabs: { id: View; icon: string; label: () => string }[] = [
     { id: "info", icon: "ℹ️", label: () => m.info_view_button() },
     { id: "poll", icon: "🗳️", label: () => m.poll_view_button() },
+    { id: "dots", icon: "🪙", label: () => m.dotvoting_view_button() },
     { id: "history", icon: "⏳", label: () => m.history_view_button() },
   ];
 </script>
@@ -54,7 +55,9 @@
   {#if view === "history"}
     <HistoryScreen />
   {:else if view === "info"}
-    <InfoScreen onStart={() => (view = "poll")} />
+    <InfoScreen />
+  {:else if view === "dots"}
+    <DotVotingScreen />
   {:else}
     <VotingScreen />
   {/if}

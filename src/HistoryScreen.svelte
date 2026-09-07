@@ -1,9 +1,11 @@
 <script lang="ts">
+  import { onDestroy } from "svelte";
   import {
     yshowName,
     yeditLog,
     type EditLogEntry,
     type EditField,
+    type EditAction,
   } from "./yjs-sync";
   import { m } from "./paraglide/messages.js";
   import { getLocale } from "./paraglide/runtime.js";
@@ -14,13 +16,17 @@
   }
 
   let editLog = $state<EditLogEntry[]>(yeditLog.toArray());
-  yeditLog.observe(() => {
+  function syncEditLog() {
     editLog = yeditLog.toArray();
-  });
-  // Anonymization is a live preference, not baked into the logged entry —
-  // re-render the log whenever anyone's changes so it stays current.
-  yshowName.observe(() => {
+  }
+  function refreshLog() {
     editLog = [...editLog];
+  }
+  yeditLog.observe(syncEditLog);
+  yshowName.observe(refreshLog);
+  onDestroy(() => {
+    yeditLog.unobserve(syncEditLog);
+    yshowName.unobserve(refreshLog);
   });
 
   const historyDateFormat = new Intl.DateTimeFormat(getLocale(), {
@@ -28,11 +34,7 @@
     timeStyle: "short",
   });
 
-  // Only select/deselect entries respect the "show my name" preference —
-  // consistent with the votes list itself, which they're a log of.
   function historyVoter(entry: EditLogEntry): Voter {
-    if (entry.action.kind === "edit")
-      return { name: entry.userName, anonymous: false };
     const shown = yshowName.get(entry.userId) ?? true;
     return { name: shown ? entry.userName : "🥷", anonymous: !shown };
   }
@@ -47,6 +49,22 @@
         return m.history_field_option();
     }
   }
+
+  function actionSummary(action: Exclude<EditAction, { kind: "edit" }>): {
+    text: string;
+    icon: string;
+  } {
+    switch (action.kind) {
+      case "select":
+        return { text: m.history_checked(), icon: "✅" };
+      case "deselect":
+        return { text: m.history_unchecked(), icon: "⭕" };
+      case "dot_inc":
+        return { text: m.history_dot_added(), icon: "🪙" };
+      case "dot_dec":
+        return { text: m.history_dot_removed(), icon: "🪙" };
+    }
+  }
 </script>
 
 <div class="flex flex-col gap-2 px-4">
@@ -56,8 +74,8 @@
       {m.history_empty()}
     </p>
   {:else}
-    <ul class="flex flex-col gap-3 text-sm">
-      {#each [...editLog].reverse() as entry, index (editLog.length - index)}
+    <ul class="flex flex-col-reverse gap-3 text-sm">
+      {#each editLog as entry, i (i)}
         <li class="flex flex-col gap-1">
           <div
             class="flex flex-row items-center gap-2 text-xs text-neutral-500 dark:text-neutral-400"
@@ -79,21 +97,19 @@
               >
             {:else}
               <span class="ml-auto"
-                >{entry.action.kind === "select"
-                  ? m.history_checked()
-                  : m.history_unchecked()}
-                {entry.action.kind === "select" ? "✅" : "⭕"}</span
+                >{actionSummary(entry.action).text}
+                {actionSummary(entry.action).icon}</span
               >
             {/if}
           </div>
           {#if entry.action.kind === "edit"}
             <div
-              class="rounded bg-red-100 px-1 break-words whitespace-pre-wrap text-red-900 dark:bg-red-950 dark:text-red-200"
+              class="rounded bg-red-100 px-1 wrap-break-word whitespace-pre-wrap text-red-900 dark:bg-red-950 dark:text-red-200"
             >
               {entry.action.oldValue}
             </div>
             <div
-              class="rounded bg-green-100 px-1 break-words whitespace-pre-wrap text-green-900 dark:bg-green-950 dark:text-green-200"
+              class="rounded bg-green-100 px-1 wrap-break-word whitespace-pre-wrap text-green-900 dark:bg-green-950 dark:text-green-200"
             >
               {entry.action.newValue}
             </div>

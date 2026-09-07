@@ -8,22 +8,31 @@ export const ydescription = ydoc.getText("description");
 export const yoptionTexts = ydoc.getMap<Y.Text>("optionTexts");
 export const yoptionOrder = ydoc.getArray<string>("optionOrder");
 export const yoptionVotes = ydoc.getMap<Y.Map<string>>("optionVotes");
+
+export interface DotVote {
+  name: string;
+  count: number;
+}
+export const ydotVotes = ydoc.getMap<Y.Map<DotVote>>("dotVotes");
+
+export const DOT_BUDGET = 5;
+
 export const yopeners = ydoc.getMap<boolean>("openers");
 // Per-voter preference: show their real name in the votes list, or a 🥷
 // placeholder. Keyed by userId, defaults to true (shown) when absent.
 export const yshowName = ydoc.getMap<boolean>("showName");
 
 export const selfId = window.webxdc?.selfAddr ?? "local";
-export const selfName = window.webxdc?.selfName ?? "You";
+export const selfName = window.webxdc?.selfName ?? m.self_name_fallback();
 
 export type EditField =
-  | { kind: "title" }
-  | { kind: "description" }
-  | { kind: "option" };
+  { kind: "title" } | { kind: "description" } | { kind: "option" };
 
 export type EditAction =
   | { kind: "select"; optionLabel: string }
   | { kind: "deselect"; optionLabel: string }
+  | { kind: "dot_inc"; optionLabel: string }
+  | { kind: "dot_dec"; optionLabel: string }
   | { kind: "edit"; field: EditField; oldValue: string; newValue: string };
 
 export interface EditLogEntry {
@@ -46,6 +55,12 @@ function totalVoterCount(): number {
   for (const id of yoptionOrder.toArray()) {
     const votes = yoptionVotes.get(id);
     if (votes) for (const voter of votes.keys()) voters.add(voter);
+    const dots = ydotVotes.get(id);
+    if (dots) {
+      for (const [voter, dot] of dots) {
+        if (dot && dot.count > 0) voters.add(voter);
+      }
+    }
   }
   return voters.size;
 }
