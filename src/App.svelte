@@ -27,6 +27,21 @@
     { id: "dots", icon: "🪙", label: () => m.dotvoting_view_button() },
     { id: "history", icon: "⏳", label: () => m.history_view_button() },
   ];
+
+  let tabEls = $state<HTMLButtonElement[]>([]);
+  function onTabKey(event: KeyboardEvent, i: number) {
+    const to = {
+      ArrowRight: i + 1,
+      ArrowLeft: i - 1,
+      Home: 0,
+      End: tabs.length - 1,
+    }[event.key];
+    if (to === undefined) return;
+    event.preventDefault();
+    const next = (to + tabs.length) % tabs.length;
+    view = tabs[next].id;
+    tabEls[next]?.focus();
+  }
 </script>
 
 <main
@@ -35,19 +50,29 @@
   <div class="flex flex-row items-center gap-2 px-4">
     <img src="icon.svg" alt="" class="h-6 w-6 mb-1" />
     <span class="grow font-bold">{m.app_name()}</span>
-    {#each tabs as tab (tab.id)}
-      <button
-        class="border-b-4 px-1 text-sm {view === tab.id
-          ? 'border-blue-500 bg-blue-100 dark:bg-blue-900'
-          : 'border-transparent'}"
-        aria-current={view === tab.id ? "page" : undefined}
-        aria-label={tab.label()}
-        onclick={() => (view = tab.id)}
-      >
-        {tab.icon}
-      </button>
-    {/each}
-    <button class="text-sm" onclick={() => (dark = !dark)}>
+    <div role="tablist" aria-label={m.tabs_label()} class="flex flex-row gap-2">
+      {#each tabs as tab, i (tab.id)}
+        <button
+          bind:this={tabEls[i]}
+          role="tab"
+          class="border-b-4 px-1 text-sm {view === tab.id
+            ? 'border-blue-500 bg-blue-100 dark:bg-blue-900'
+            : 'border-transparent'}"
+          aria-selected={view === tab.id}
+          aria-label={tab.label()}
+          tabindex={view === tab.id ? 0 : -1}
+          onclick={() => (view = tab.id)}
+          onkeydown={(event) => onTabKey(event, i)}
+        >
+          {tab.icon}
+        </button>
+      {/each}
+    </div>
+    <button
+      class="text-sm"
+      aria-label={m.theme_toggle_label()}
+      onclick={() => (dark = !dark)}
+    >
       {dark ? "🌙" : "☀️"}
     </button>
   </div>

@@ -10,6 +10,9 @@
   "remove_vote_label": "Remove vote",
   "add_dot_label": "Add dot",
   "remove_dot_label": "Remove dot",
+  "delete_option_label": "Delete option",
+  "theme_toggle_label": "Toggle theme",
+  "tabs_label": "Views",
   "turnout_bar_label": "Voter turnout",
   "option_result_bar_label": "Result",
   "votes_summary": [
@@ -55,7 +58,7 @@
   "info_feature_history": "Open the history view ⏳ to see every edit and vote change over time.",
   "info_polls_goto": "Press 🗳️ to vote.",
   "info_feature_dotvoting": "Spread your 5 dots across the options with ▲ / ▼ to show the group what to prioritise. Turn on [Sort by dots] to rank the options by their totals.",
-  "info_dotvoting_options": "To add or remove options, use the voting screen 🗳️.",
+  "info_dotvoting_options": "To add or remove options, use the poll 🗳️ screen.",
   "info_dotvoting_goto": "Press 🪙 to vote in dot-voting mode.",
   "info_tip_theme": "Switch the theme by pressing ☀️ / 🌙.",
   "info_tip_reread": "To read this guide again, press ℹ️."

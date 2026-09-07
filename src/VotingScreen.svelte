@@ -16,10 +16,13 @@
     selfName,
     syncNow,
     logEdit,
+    fieldCommit,
+    orderedTextIds,
   } from "./yjs-sync";
   import { m } from "./paraglide/messages.js";
   import { draggable, droppable, type DragDropState } from "@thisux/sveltednd";
-  import { bindYText } from "./yjs-textarea";
+  import { autogrow, bindYText } from "./yjs-textarea";
+  import { prefs } from "./prefs.svelte";
 
   interface Option {
     id: string;
@@ -31,32 +34,10 @@
     anonymous: boolean;
   }
 
-  // Grows the textarea's height to fit its content, re-measuring on every
-  // native 'input' event — including synthetic ones that bindYText dispatches
-  // after applying a remote change, so it stays in sync without knowing
-  // anything about Yjs.
-  function autogrow(node: HTMLTextAreaElement) {
-    function resize() {
-      node.style.height = "auto";
-      node.style.height = `${node.scrollHeight}px`;
-    }
-    resize();
-    node.addEventListener("input", resize);
-    return {
-      destroy() {
-        node.removeEventListener("input", resize);
-      },
-    };
-  }
-
   function optionYText(id: string): Y.Text {
     const ytext = yoptionTexts.get(id);
     if (!ytext) throw new Error(`missing Y.Text for option ${id}`);
     return ytext;
-  }
-
-  function orderedTextIds(): string[] {
-    return yoptionOrder.toArray().filter((id) => yoptionTexts.has(id));
   }
 
   function readOptions(): Option[] {
@@ -103,8 +84,6 @@
     totalOpenedCount = yopeners.size;
   }
 
-  let showVotes = $state(false);
-
   let showMyName = $state(yshowName.get(selfId) ?? true);
   function syncShowMyName() {
     showMyName = yshowName.get(selfId) ?? true;
@@ -125,7 +104,7 @@
     const names: Record<string, Voter[]> = {};
     const mine: Record<string, boolean> = {};
     const voters = new Set<string>();
-    for (const id of yoptionOrder.toArray()) {
+    for (const id of orderedTextIds()) {
       const votes = yoptionVotes.get(id);
       names[id] = votes
         ? [...votes.keys()].map((voterId) => {
@@ -193,25 +172,9 @@
     syncNow();
   }
 
-  function commitTitleEdit(oldValue: string, newValue: string) {
-    logEdit({ kind: "edit", field: { kind: "title" }, oldValue, newValue });
-    syncNow();
-  }
-
-  function commitDescriptionEdit(oldValue: string, newValue: string) {
-    logEdit({
-      kind: "edit",
-      field: { kind: "description" },
-      oldValue,
-      newValue,
-    });
-    syncNow();
-  }
-
-  function commitOptionEdit(oldValue: string, newValue: string) {
-    logEdit({ kind: "edit", field: { kind: "option" }, oldValue, newValue });
-    syncNow();
-  }
+  const commitTitle = fieldCommit({ kind: "title" });
+  const commitDescription = fieldCommit({ kind: "description" });
+  const commitOption = fieldCommit({ kind: "option" });
 
   function handleOptionDrop(state: DragDropState<Option>) {
     const { draggedItem, targetContainer, dropPosition } = state;
@@ -234,7 +197,7 @@
   <textarea
     class="grow resize-none overflow-hidden text-xl font-bold wrap-break-word whitespace-pre-wrap outline-none focus:ring-2 focus:ring-blue-500"
     rows="1"
-    use:bindYText={{ yText: ytitle, onCommit: commitTitleEdit }}
+    use:bindYText={{ yText: ytitle, onCommit: commitTitle }}
     use:autogrow
     placeholder={m.title_placeholder()}></textarea>
 </div>
@@ -243,7 +206,7 @@
   <textarea
     class="grow resize-none overflow-hidden wrap-break-word whitespace-pre-wrap outline-none focus:ring-2 focus:ring-blue-500"
     rows="1"
-    use:bindYText={{ yText: ydescription, onCommit: commitDescriptionEdit }}
+    use:bindYText={{ yText: ydescription, onCommit: commitDescription }}
     use:autogrow
     placeholder={m.description_placeholder()}></textarea>
 </div>
@@ -252,7 +215,7 @@
   class="flex flex-row items-center justify-between px-4 text-sm text-neutral-600 dark:text-neutral-400"
 >
   <label class="flex flex-row items-center gap-1">
-    <input type="checkbox" bind:checked={showVotes} />
+    <input type="checkbox" bind:checked={prefs.showVotes} />
     {m.show_votes_label()}
   </label>
   <label class="flex flex-row items-center gap-1">
@@ -267,7 +230,7 @@
 
 <div
   class="flex flex-row items-center gap-2 px-4"
-  style:visibility={showVotes ? "visible" : "hidden"}
+  style:visibility={prefs.showVotes ? "visible" : "hidden"}
 >
   <span class="text-sm whitespace-nowrap text-neutral-600 dark:text-neutral-400"
     >✅ {totalVoterCount}</span
@@ -366,20 +329,21 @@
           rows="1"
           use:bindYText={{
             yText: optionYText(option.id),
-            onCommit: commitOptionEdit,
+            onCommit: commitOption,
           }}
           use:autogrow
           placeholder={m.option_placeholder()}></textarea>
         {#if option.text.trim() === ""}
           <button
             class="self-start px-1"
+            aria-label={m.delete_option_label()}
             onclick={() => deleteOption(option.id)}>🗑️</button
           >
         {/if}
       </div>
       <div
         class="flex h-2.5 flex-row"
-        style:visibility={showVotes ? "visible" : "hidden"}
+        style:visibility={prefs.showVotes ? "visible" : "hidden"}
         role="progressbar"
         aria-label={option.text || m.option_result_bar_label()}
         aria-valuemin="0"
@@ -399,7 +363,7 @@
       </div>
       <div
         class="flex flex-row items-center gap-2 text-sm text-neutral-600 dark:text-neutral-400"
-        style:visibility={showVotes ? "visible" : "hidden"}
+        style:visibility={prefs.showVotes ? "visible" : "hidden"}
       >
         <span class="grow">
           {#each voteNames[option.id] ?? [] as voter, i (i)}

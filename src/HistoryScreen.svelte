@@ -76,19 +76,20 @@
   {:else}
     <ul class="flex flex-col-reverse gap-3 text-sm">
       {#each editLog as entry, i (i)}
+        {@const voter = historyVoter(entry)}
         <li class="flex flex-col gap-1">
           <div
             class="flex flex-row items-center gap-2 text-xs text-neutral-500 dark:text-neutral-400"
           >
             <span>{historyDateFormat.format(entry.at)}</span>
-            {#if historyVoter(entry).anonymous}
+            {#if voter.anonymous}
               <span
                 class="inline-flex items-center justify-center rounded-full border border-neutral-300 bg-[#929292] px-1"
-                >{historyVoter(entry).name}</span
+                >{voter.name}</span
               >
             {:else}
               <span class="font-medium text-black dark:text-neutral-100"
-                >{historyVoter(entry).name}</span
+                >{voter.name}</span
               >
             {/if}
             {#if entry.action.kind === "edit"}
@@ -96,10 +97,8 @@
                 >{editFieldLabel(entry.action.field)} ✏️</span
               >
             {:else}
-              <span class="ml-auto"
-                >{actionSummary(entry.action).text}
-                {actionSummary(entry.action).icon}</span
-              >
+              {@const summary = actionSummary(entry.action)}
+              <span class="ml-auto">{summary.text} {summary.icon}</span>
             {/if}
           </div>
           {#if entry.action.kind === "edit"}

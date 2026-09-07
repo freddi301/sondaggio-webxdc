@@ -1,9 +1,19 @@
 import * as Y from "yjs";
 
-// Finds the minimal [start, oldEnd) / [start, newEnd) edit range between two
-// strings that differ in one contiguous region — which is what a single
-// native `input` event on a text field always produces (typing, pasting,
-// cutting, autocorrect all replace one contiguous span).
+export function autogrow(node: HTMLTextAreaElement) {
+  function resize() {
+    node.style.height = "auto";
+    node.style.height = `${node.scrollHeight}px`;
+  }
+  resize();
+  node.addEventListener("input", resize);
+  return {
+    destroy() {
+      node.removeEventListener("input", resize);
+    },
+  };
+}
+
 function diffRange(oldStr: string, newStr: string) {
   const maxStart = Math.min(oldStr.length, newStr.length);
   let start = 0;
@@ -77,8 +87,6 @@ export function bindYText(
 
   const onInput = () => {
     const { start, oldEnd, newEnd } = diffRange(yText.toString(), node.value);
-    // Nothing actually changed — e.g. the synthetic 'input' event this
-    // binding dispatches after applying a remote change re-enters here.
     if (start === oldEnd && start === newEnd) return;
 
     applyingLocalChange = true;
@@ -104,8 +112,6 @@ export function bindYText(
 
   return {
     destroy() {
-      // Commit a pending edit session if the field is removed while still
-      // focused (e.g. its option gets deleted) instead of dropping it.
       commitIfChanged();
       doc.off("beforeTransaction", onBeforeTransaction);
       yText.unobserve(onYTextChange);

@@ -17,6 +17,10 @@ export const ydotVotes = ydoc.getMap<Y.Map<DotVote>>("dotVotes");
 
 export const DOT_BUDGET = 5;
 
+export function orderedTextIds(): string[] {
+  return yoptionOrder.toArray().filter((id) => yoptionTexts.has(id));
+}
+
 export const yopeners = ydoc.getMap<boolean>("openers");
 // Per-voter preference: show their real name in the votes list, or a 🥷
 // placeholder. Keyed by userId, defaults to true (shown) when absent.
@@ -50,9 +54,16 @@ export function logEdit(action: EditAction) {
   ]);
 }
 
+export function fieldCommit(field: EditField) {
+  return (oldValue: string, newValue: string) => {
+    logEdit({ kind: "edit", field, oldValue, newValue });
+    syncNow();
+  };
+}
+
 function totalVoterCount(): number {
   const voters = new Set<string>();
-  for (const id of yoptionOrder.toArray()) {
+  for (const id of orderedTextIds()) {
     const votes = yoptionVotes.get(id);
     if (votes) for (const voter of votes.keys()) voters.add(voter);
     const dots = ydotVotes.get(id);

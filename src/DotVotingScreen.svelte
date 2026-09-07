@@ -15,10 +15,13 @@
     selfName,
     syncNow,
     logEdit,
+    fieldCommit,
+    orderedTextIds,
     type DotVote,
   } from "./yjs-sync";
   import { m } from "./paraglide/messages.js";
-  import { bindYText } from "./yjs-textarea";
+  import { autogrow, bindYText } from "./yjs-textarea";
+  import { prefs } from "./prefs.svelte";
 
   interface Option {
     id: string;
@@ -31,28 +34,10 @@
     tokens: number;
   }
 
-  function autogrow(node: HTMLTextAreaElement) {
-    function resize() {
-      node.style.height = "auto";
-      node.style.height = `${node.scrollHeight}px`;
-    }
-    resize();
-    node.addEventListener("input", resize);
-    return {
-      destroy() {
-        node.removeEventListener("input", resize);
-      },
-    };
-  }
-
   function optionYText(id: string): Y.Text {
     const ytext = yoptionTexts.get(id);
     if (!ytext) throw new Error(`missing Y.Text for option ${id}`);
     return ytext;
-  }
-
-  function orderedTextIds(): string[] {
-    return yoptionOrder.toArray().filter((id) => yoptionTexts.has(id));
   }
 
   function readOptions(): Option[] {
@@ -78,7 +63,6 @@
   }
 
   // Local-only, resets to false on every launch — not persisted, not synced.
-  let showVotes = $state(false);
   let sortByDots = $state(false);
 
   let showMyName = $state(yshowName.get(selfId) ?? true);
@@ -107,7 +91,7 @@
     const distinct = new Set<string>();
     let max = 0;
     let used = 0;
-    for (const id of yoptionOrder.toArray()) {
+    for (const id of orderedTextIds()) {
       const dv = ydotVotes.get(id);
       const list: DotVoter[] = [];
       let total = 0;
@@ -213,32 +197,16 @@
     syncNow();
   }
 
-  function commitTitleEdit(oldValue: string, newValue: string) {
-    logEdit({ kind: "edit", field: { kind: "title" }, oldValue, newValue });
-    syncNow();
-  }
-
-  function commitDescriptionEdit(oldValue: string, newValue: string) {
-    logEdit({
-      kind: "edit",
-      field: { kind: "description" },
-      oldValue,
-      newValue,
-    });
-    syncNow();
-  }
-
-  function commitOptionEdit(oldValue: string, newValue: string) {
-    logEdit({ kind: "edit", field: { kind: "option" }, oldValue, newValue });
-    syncNow();
-  }
+  const commitTitle = fieldCommit({ kind: "title" });
+  const commitDescription = fieldCommit({ kind: "description" });
+  const commitOption = fieldCommit({ kind: "option" });
 </script>
 
 <div class="flex flex-row items-center gap-2 px-4">
   <textarea
     class="grow resize-none overflow-hidden text-xl font-bold wrap-break-word whitespace-pre-wrap outline-none focus:ring-2 focus:ring-blue-500"
     rows="1"
-    use:bindYText={{ yText: ytitle, onCommit: commitTitleEdit }}
+    use:bindYText={{ yText: ytitle, onCommit: commitTitle }}
     use:autogrow
     placeholder={m.title_placeholder()}></textarea>
 </div>
@@ -247,7 +215,7 @@
   <textarea
     class="grow resize-none overflow-hidden wrap-break-word whitespace-pre-wrap outline-none focus:ring-2 focus:ring-blue-500"
     rows="1"
-    use:bindYText={{ yText: ydescription, onCommit: commitDescriptionEdit }}
+    use:bindYText={{ yText: ydescription, onCommit: commitDescription }}
     use:autogrow
     placeholder={m.description_placeholder()}></textarea>
 </div>
@@ -269,7 +237,7 @@
   class="flex flex-row items-center justify-between px-4 text-sm text-neutral-600 dark:text-neutral-400"
 >
   <label class="flex flex-row items-center gap-1">
-    <input type="checkbox" bind:checked={showVotes} />
+    <input type="checkbox" bind:checked={prefs.showVotes} />
     {m.show_votes_label()}
   </label>
   <label class="flex flex-row items-center gap-1">
@@ -284,7 +252,7 @@
 
 <div
   class="flex flex-row items-center gap-2 px-4"
-  style:visibility={showVotes ? "visible" : "hidden"}
+  style:visibility={prefs.showVotes ? "visible" : "hidden"}
 >
   <span class="text-sm whitespace-nowrap text-neutral-600 dark:text-neutral-400"
     >✅ {dotVoterCount}</span
@@ -327,18 +295,24 @@
             rows="1"
             use:bindYText={{
               yText: optionYText(option.id),
-              onCommit: commitOptionEdit,
+              onCommit: commitOption,
             }}
             use:autogrow
             placeholder={m.option_placeholder()}></textarea>
-          <div class="flex flex-row items-center leading-none">
+          <div
+            class="flex flex-row items-center leading-none"
+            role="group"
+            aria-label={option.text || m.option_placeholder()}
+          >
             <button
               class="pr-1 pl-2 text-lg disabled:opacity-30"
               aria-label={m.remove_dot_label()}
               onclick={() => removeToken(option.id)}
               disabled={sortByDots || (myTokens[option.id] ?? 0) <= 0}>▼</button
             >
-            <span class="text-sm tabular-nums">{myTokens[option.id] ?? 0}</span>
+            <span class="text-sm tabular-nums" aria-live="polite"
+              >{myTokens[option.id] ?? 0}</span
+            >
             <button
               class="pl-1 text-lg disabled:opacity-30"
               aria-label={m.add_dot_label()}
@@ -349,12 +323,13 @@
         </div>
         <div
           class="flex h-2.5 flex-row"
-          style:visibility={showVotes ? "visible" : "hidden"}
+          style:visibility={prefs.showVotes ? "visible" : "hidden"}
           role="progressbar"
           aria-label={option.text || m.option_result_bar_label()}
           aria-valuemin="0"
           aria-valuemax="100"
           aria-valuenow={optionFillPercent(option.id)}
+          aria-valuetext="{optionTokens[option.id] ?? 0} 🪙"
         >
           <div
             class="rounded-l-full bg-blue-500"
@@ -369,7 +344,7 @@
         </div>
         <div
           class="flex flex-row items-center gap-2 text-sm text-neutral-600 dark:text-neutral-400"
-          style:visibility={showVotes ? "visible" : "hidden"}
+          style:visibility={prefs.showVotes ? "visible" : "hidden"}
         >
           <span class="grow">
             {#each optionVoters[option.id] ?? [] as voter, i (i)}
