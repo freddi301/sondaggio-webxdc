@@ -19,9 +19,7 @@
 {/snippet}
 
 <div class="flex h-[calc(100dvh-4rem)] flex-col gap-3 pb-2 text-sm">
-  <div
-    class="themed-scroll flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-4"
-  >
+  <div class="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-4">
     <h2 class="text-lg font-bold">{m.info_polls_heading()}</h2>
     <p>{@render line(m.info_feature_edit())}</p>
     <p>{@render line(m.info_feature_add())}</p>

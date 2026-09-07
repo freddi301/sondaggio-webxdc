@@ -40,6 +40,7 @@ export type EditAction =
   | { kind: "edit"; field: EditField; oldValue: string; newValue: string };
 
 export interface EditLogEntry {
+  id?: string;
   at: number;
   userId: string;
   userName: string;
@@ -50,7 +51,13 @@ export const yeditLog = ydoc.getArray<EditLogEntry>("editLog");
 
 export function logEdit(action: EditAction) {
   yeditLog.push([
-    { at: Date.now(), userId: selfId, userName: selfName, action },
+    {
+      id: crypto.randomUUID(),
+      at: Date.now(),
+      userId: selfId,
+      userName: selfName,
+      action,
+    },
   ]);
 }
 
@@ -96,6 +103,23 @@ const provider = window.webxdc
 export function syncNow() {
   provider?.syncToChatPeers();
 }
+
+function pruneOrphans() {
+  const live = new Set(yoptionOrder.toArray());
+  const dead = new Set<string>();
+  for (const id of yoptionVotes.keys()) if (!live.has(id)) dead.add(id);
+  for (const id of ydotVotes.keys()) if (!live.has(id)) dead.add(id);
+  if (dead.size === 0) return;
+  ydoc.transact(() => {
+    for (const id of dead) {
+      yoptionVotes.delete(id);
+      ydotVotes.delete(id);
+    }
+  });
+}
+yoptionOrder.observe(pruneOrphans);
+yoptionVotes.observe(pruneOrphans);
+ydotVotes.observe(pruneOrphans);
 
 if (!yopeners.has(selfId)) {
   setTimeout(() => {

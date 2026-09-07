@@ -166,6 +166,21 @@
     return Math.round(((optionTokens[id] ?? 0) / maxOptionTokens) * 100);
   }
 
+  let syncTimer: ReturnType<typeof setTimeout> | undefined;
+  function debouncedSync() {
+    clearTimeout(syncTimer);
+    syncTimer = setTimeout(() => {
+      syncTimer = undefined;
+      syncNow();
+    }, 800);
+  }
+  onDestroy(() => {
+    if (syncTimer !== undefined) {
+      clearTimeout(syncTimer);
+      syncNow();
+    }
+  });
+
   function addToken(id: string) {
     if (sortByDots || dotsRemaining <= 0) return;
     const optionLabel = optionYText(id).toString();
@@ -179,7 +194,7 @@
       dv.set(selfId, { name: selfName, count: current + 1 });
       logEdit({ kind: "dot_inc", optionLabel });
     });
-    syncNow();
+    debouncedSync();
   }
 
   function removeToken(id: string) {
@@ -194,7 +209,7 @@
       else dv.set(selfId, { name: selfName, count: current - 1 });
       logEdit({ kind: "dot_dec", optionLabel });
     });
-    syncNow();
+    debouncedSync();
   }
 
   const commitTitle = fieldCommit({ kind: "title" });

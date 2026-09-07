@@ -68,14 +68,14 @@
 </script>
 
 <div class="flex flex-col gap-2 px-4">
-  <h2 class="font-bold">{m.history_heading()}</h2>
+  <h2 class="text-lg font-bold">{m.history_heading()}</h2>
   {#if editLog.length === 0}
     <p class="text-sm text-neutral-500 dark:text-neutral-400">
       {m.history_empty()}
     </p>
   {:else}
-    <ul class="flex flex-col-reverse gap-3 text-sm">
-      {#each editLog as entry, i (i)}
+    <ul class="flex flex-col gap-3 text-sm">
+      {#each [...editLog].reverse() as entry (entry.id ?? `${entry.at}-${entry.userId}`)}
         {@const voter = historyVoter(entry)}
         <li class="flex flex-col gap-1">
           <div

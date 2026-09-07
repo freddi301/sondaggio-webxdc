@@ -4,22 +4,27 @@
   import InfoScreen from "./InfoScreen.svelte";
   import VotingScreen from "./VotingScreen.svelte";
   import DotVotingScreen from "./DotVotingScreen.svelte";
-
-  const THEME_KEY = "sondaggio-dark";
-
-  let dark = $state(localStorage.getItem(THEME_KEY) !== "false");
-
-  $effect(() => {
-    document.documentElement.classList.toggle("dark", dark);
-    localStorage.setItem(THEME_KEY, String(dark));
-  });
+  import { prefs } from "./prefs.svelte";
 
   const INFO_SEEN_KEY = "sondaggio-info-seen";
   const infoSeen = localStorage.getItem(INFO_SEEN_KEY) === "true";
   if (!infoSeen) localStorage.setItem(INFO_SEEN_KEY, "true");
 
   type View = "poll" | "dots" | "history" | "info";
-  let view = $state<View>(infoSeen ? "poll" : "info");
+  const VIEWS: View[] = ["poll", "dots", "history", "info"];
+  const VIEW_KEY = "sondaggio-view";
+
+  const storedView = localStorage.getItem(VIEW_KEY) as View | null;
+  let view = $state<View>(
+    !infoSeen
+      ? "info"
+      : storedView && VIEWS.includes(storedView)
+        ? storedView
+        : "poll",
+  );
+  $effect(() => {
+    localStorage.setItem(VIEW_KEY, view);
+  });
 
   const tabs: { id: View; icon: string; label: () => string }[] = [
     { id: "info", icon: "ℹ️", label: () => m.info_view_button() },
@@ -54,11 +59,13 @@
       {#each tabs as tab, i (tab.id)}
         <button
           bind:this={tabEls[i]}
+          id="tab-{tab.id}"
           role="tab"
           class="border-b-4 px-1 text-sm {view === tab.id
             ? 'border-blue-500 bg-blue-100 dark:bg-blue-900'
             : 'border-transparent'}"
           aria-selected={view === tab.id}
+          aria-controls="tabpanel"
           aria-label={tab.label()}
           tabindex={view === tab.id ? 0 : -1}
           onclick={() => (view = tab.id)}
@@ -71,19 +78,26 @@
     <button
       class="text-sm"
       aria-label={m.theme_toggle_label()}
-      onclick={() => (dark = !dark)}
+      onclick={() => (prefs.dark = !prefs.dark)}
     >
-      {dark ? "🌙" : "☀️"}
+      {prefs.dark ? "🌙" : "☀️"}
     </button>
   </div>
 
-  {#if view === "history"}
-    <HistoryScreen />
-  {:else if view === "info"}
-    <InfoScreen />
-  {:else if view === "dots"}
-    <DotVotingScreen />
-  {:else}
-    <VotingScreen />
-  {/if}
+  <div
+    id="tabpanel"
+    role="tabpanel"
+    aria-labelledby="tab-{view}"
+    class="flex flex-col gap-2"
+  >
+    {#if view === "history"}
+      <HistoryScreen />
+    {:else if view === "info"}
+      <InfoScreen />
+    {:else if view === "dots"}
+      <DotVotingScreen />
+    {:else}
+      <VotingScreen />
+    {/if}
+  </div>
 </main>
