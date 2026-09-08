@@ -212,13 +212,13 @@
 </div>
 
 <div
-  class="flex flex-row items-center justify-between px-4 text-sm text-neutral-600 dark:text-neutral-400"
+  class="flex flex-row items-center justify-between px-4 text-base text-neutral-600 dark:text-neutral-400"
 >
-  <label class="flex flex-row items-center gap-1">
+  <label class="flex flex-row items-baseline gap-2 font-bold text-black dark:text-neutral-100">
     <input type="checkbox" bind:checked={prefs.showVotes} />
     {m.show_votes_label()}
   </label>
-  <label class="flex flex-row items-center gap-1">
+  <label class="flex flex-row items-baseline gap-2">
     <input
       type="checkbox"
       checked={showMyName}

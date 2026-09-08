@@ -1,5 +1,6 @@
 <script lang="ts">
   import { m } from "./paraglide/messages.js";
+  import pkg from "../package.json";
   import HistoryScreen from "./HistoryScreen.svelte";
   import InfoScreen from "./InfoScreen.svelte";
   import VotingScreen from "./VotingScreen.svelte";
@@ -54,7 +55,12 @@
 >
   <div class="flex flex-row items-center gap-2 px-4">
     <img src="icon.svg" alt="" class="h-6 w-6 mb-1 mt-2" />
-    <span class="grow font-bold mt-2">{m.app_name()}</span>
+    <span class="grow font-bold mt-2 text-neutral-500 dark:text-neutral-400"
+      >{m.app_name()}<span
+        class="ml-1 text-xs font-normal text-neutral-500 dark:text-neutral-400"
+        >v{pkg.version}</span
+      ></span
+    >
     <div role="tablist" aria-label={m.tabs_label()} class="flex flex-row gap-2">
       {#each tabs as tab, i (tab.id)}
         <button
