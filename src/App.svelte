@@ -50,18 +50,18 @@
 </script>
 
 <main
-  class="flex min-h-screen flex-col gap-2 bg-white text-black dark:bg-neutral-800 dark:text-neutral-100 py-2"
+  class="flex min-h-screen flex-col gap-2 bg-white text-black dark:bg-neutral-800 dark:text-neutral-100 pb-2"
 >
   <div class="flex flex-row items-center gap-2 px-4">
-    <img src="icon.svg" alt="" class="h-6 w-6 mb-1" />
-    <span class="grow font-bold">{m.app_name()}</span>
+    <img src="icon.svg" alt="" class="h-6 w-6 mb-1 mt-2" />
+    <span class="grow font-bold mt-2">{m.app_name()}</span>
     <div role="tablist" aria-label={m.tabs_label()} class="flex flex-row gap-2">
       {#each tabs as tab, i (tab.id)}
         <button
           bind:this={tabEls[i]}
           id="tab-{tab.id}"
           role="tab"
-          class="border-b-4 px-1 text-sm {view === tab.id
+          class="border-b-4 px-2 text-sm py-1 {view === tab.id
             ? 'border-blue-500 bg-blue-100 dark:bg-blue-900'
             : 'border-transparent'}"
           aria-selected={view === tab.id}

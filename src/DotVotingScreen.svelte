@@ -303,7 +303,7 @@
 {:else}
   <ul class="flex flex-col gap-4 pt-2">
     {#each displayOptions as option (option.id)}
-      <li class="flex flex-col gap-1 px-2">
+      <li class="flex flex-col gap-1 pl-2">
         <div class="flex flex-row items-center gap-1">
           <textarea
             class="grow resize-none overflow-hidden wrap-break-word whitespace-pre-wrap outline-none focus:ring-2 focus:ring-blue-500"
@@ -320,16 +320,16 @@
             aria-label={option.text || m.option_placeholder()}
           >
             <button
-              class="pr-1 pl-2 text-lg disabled:opacity-30"
+              class="px-3 py-2 text-xl disabled:opacity-30"
               aria-label={m.remove_dot_label()}
               onclick={() => removeToken(option.id)}
               disabled={sortByDots || (myTokens[option.id] ?? 0) <= 0}>▼</button
             >
-            <span class="text-sm tabular-nums" aria-live="polite"
+            <span class="text-sm tabular-nums -mx-1" aria-live="polite"
               >{myTokens[option.id] ?? 0}</span
             >
             <button
-              class="pl-1 text-lg disabled:opacity-30"
+              class="px-3 py-2 text-xl disabled:opacity-30"
               aria-label={m.add_dot_label()}
               onclick={() => addToken(option.id)}
               disabled={sortByDots || dotsRemaining <= 0}>▲</button
