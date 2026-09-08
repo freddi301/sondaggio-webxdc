@@ -34,6 +34,7 @@
     <p>{@render line(m.info_polls_goto())}</p>
 
     <h2 class="text-lg font-bold">{m.info_dotvoting_heading()}</h2>
+    <p>{@render line(m.info_dotvoting_intro())}</p>
     <p>{@render line(m.info_feature_dotvoting())}</p>
     <p>{@render line(m.info_dotvoting_options())}</p>
     <p>{@render line(m.info_dotvoting_goto())}</p>

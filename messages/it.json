@@ -57,6 +57,7 @@
   "info_feature_viewer_count": "👁️ indica quante persone hanno visto il sondaggio.",
   "info_feature_history": "Apri la cronologia ⏳ per vedere tutte le modifiche e i cambi di voto nel tempo.",
   "info_polls_goto": "Premi 🗳️ per votare.",
+  "info_dotvoting_intro": "Il dot voting è utile per sondare le priorità del gruppo.",
   "info_feature_dotvoting": "Distribuisci i tuoi 5 bollini tra le opzioni con ▲ / ▼ per mostrare al gruppo a cosa dare priorità. Attiva [Ordina in base ai bollini] per ordinare le opzioni in base ai totali.",
   "info_dotvoting_options": "Per aggiungere o rimuovere le opzioni usa la schermata sondaggio 🗳️.",
   "info_dotvoting_goto": "Premi 🪙 per votare in modalità dot voting.",
