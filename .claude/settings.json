@@ -1,4 +1,16 @@
 {
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:webxdc.org)",
+      "WebFetch(domain:docs.yjs.dev)"
+    ]
+  },
+  "enabledPlugins": {
+    "feature-dev@claude-plugins-official": true,
+    "frontend-design@claude-plugins-official": true,
+    "code-review@claude-plugins-official": true,
+    "context7@claude-plugins-official": true
+  },
   "extraKnownMarketplaces": {
     "team-plugins": {
       "source": {
@@ -6,13 +18,5 @@
         "repo": "anthropics/claude-plugins-official"
       }
     }
-  },
-  "enabledPlugins": {
-    "feature-dev@claude-plugins-official": true,
-    "frontend-design@claude-plugins-official": true,
-    "code-review@claude-plugins-official": true
-  },
-  "permissions": {
-    "allow": ["WebFetch(domain:webxdc.org)", "WebFetch(domain:docs.yjs.dev)"]
   }
 }
