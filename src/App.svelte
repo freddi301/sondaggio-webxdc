@@ -34,7 +34,7 @@
   class="flex min-h-screen flex-col gap-2 bg-white text-black dark:bg-neutral-800 dark:text-neutral-100 pb-2"
 >
   <div class="flex flex-row items-center gap-2 px-4">
-    <img src="icon.svg" alt="" class="h-6 w-6 mb-1 mt-2" />
+    <img src="icon.svg" alt="" class="h-6 w-6 mb-1 my-1" />
     <span class="grow font-bold my-1 text-neutral-500 dark:text-neutral-400"
       >{m.app_name()}<span
         class="ml-1 text-xs font-normal text-neutral-500 dark:text-neutral-400"

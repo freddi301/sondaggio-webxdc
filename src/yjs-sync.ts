@@ -9,7 +9,8 @@ export const yoptionTexts = ydoc.getMap<Y.Text>("optionTexts");
 export const yoptionOrder = ydoc.getArray<string>("optionOrder");
 export const yoptionVotes = ydoc.getMap<Y.Map<string>>("optionVotes");
 export const ydotVotes = ydoc.getMap<Y.Map<DotVote>>("dotVotes");
-export const yopeners = ydoc.getMap<boolean>("openers");
+export const ypollViewers = ydoc.getMap<string>("pollViewers");
+export const ydotViewers = ydoc.getMap<string>("dotViewers");
 export const yshowName = ydoc.getMap<boolean>("showName");
 export const yeditLog = ydoc.getArray<EditLogEntry>("editLog");
 
@@ -122,12 +123,12 @@ yoptionOrder.observe(pruneOrphans);
 yoptionVotes.observe(pruneOrphans);
 ydotVotes.observe(pruneOrphans);
 
-if (!yopeners.has(selfId)) {
-  setTimeout(() => {
-    ydoc.transact(() => {
-      yopeners.set(selfId, true);
-      logEdit({ kind: "view" });
-    });
-    syncNow();
-  }, 2000);
+export function markViewer(yviewers: Y.Map<string>) {
+  if (yviewers.has(selfId)) return;
+  const firstEverView = !ypollViewers.has(selfId) && !ydotViewers.has(selfId);
+  ydoc.transact(() => {
+    yviewers.set(selfId, selfName);
+    if (firstEverView) logEdit({ kind: "view" });
+  });
+  syncNow();
 }

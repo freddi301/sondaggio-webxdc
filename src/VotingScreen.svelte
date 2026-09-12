@@ -10,7 +10,7 @@
     yoptionVotes,
     ydotVotes,
     type DotVote,
-    yopeners,
+    ypollViewers,
     yshowName,
     selfId,
     selfName,
@@ -24,6 +24,7 @@
   import { draggable, droppable, type DragDropState } from "@thisux/sveltednd";
   import { autogrow, bindYText } from "./yjs-textarea";
   import { prefs } from "./prefs.svelte";
+  import Turnout from "./Turnout.svelte";
 
   interface Option {
     id: string;
@@ -80,11 +81,6 @@
     syncNow();
   }
 
-  let totalOpenedCount = $state(yopeners.size);
-  function syncOpened() {
-    totalOpenedCount = yopeners.size;
-  }
-
   let showMyName = $state(yshowName.get(selfId) ?? true);
   function syncShowMyName() {
     showMyName = yshowName.get(selfId) ?? true;
@@ -100,11 +96,12 @@
   let voteNames = $state<Record<string, Voter[]>>({});
   let myVotes = $state<Record<string, boolean>>({});
   let totalVoterCount = $state(0);
+  let allVoters = $state<{ id: string; name: string }[]>([]);
 
   function syncVotes() {
     const names: Record<string, Voter[]> = {};
     const mine: Record<string, boolean> = {};
-    const voters = new Set<string>();
+    const voterNames = new Map<string, string>();
     for (const id of orderedTextIds()) {
       const votes = yoptionVotes.get(id);
       names[id] = votes
@@ -117,18 +114,19 @@
           })
         : [];
       mine[id] = votes?.has(selfId) ?? false;
-      if (votes) for (const voter of votes.keys()) voters.add(voter);
+      if (votes)
+        for (const [voterId, name] of votes) voterNames.set(voterId, name);
     }
     voteNames = names;
     myVotes = mine;
-    totalVoterCount = voters.size;
+    totalVoterCount = voterNames.size;
+    allVoters = [...voterNames].map(([id, name]) => ({ id, name }));
   }
 
   syncVotes();
 
   yoptionOrder.observe(syncOptions);
   yoptionTexts.observeDeep(syncOptions);
-  yopeners.observe(syncOpened);
   yshowName.observe(syncShowMyName);
   yoptionVotes.observeDeep(syncVotes);
   yoptionOrder.observe(syncVotes);
@@ -136,21 +134,21 @@
   onDestroy(() => {
     yoptionOrder.unobserve(syncOptions);
     yoptionTexts.unobserveDeep(syncOptions);
-    yopeners.unobserve(syncOpened);
     yshowName.unobserve(syncShowMyName);
     yoptionVotes.unobserveDeep(syncVotes);
     yoptionOrder.unobserve(syncVotes);
     yshowName.unobserve(syncVotes);
   });
 
-  let openedVotePercent = $derived.by(() => {
-    const denom = Math.max(totalOpenedCount, totalVoterCount);
-    return denom === 0 ? 0 : Math.round((totalVoterCount / denom) * 100);
-  });
-
   function voteCount(id: string): number {
     return voteNames[id]?.length ?? 0;
   }
+
+  let displayOptions = $derived(
+    prefs.showVotes
+      ? [...options].sort((a, b) => voteCount(b.id) - voteCount(a.id))
+      : options,
+  );
 
   function votePercent(id: string): number {
     if (totalVoterCount === 0) return 0;
@@ -231,39 +229,10 @@
   </label>
 </div>
 
-<div
-  class="flex flex-row items-center gap-2 px-4"
-  style:visibility={prefs.showVotes ? "visible" : "hidden"}
->
-  <span class="text-sm whitespace-nowrap text-neutral-600 dark:text-neutral-400"
-    >✅ {totalVoterCount}</span
-  >
-  <div
-    class="flex h-2.5 grow flex-row"
-    role="progressbar"
-    aria-label={m.turnout_bar_label()}
-    aria-valuemin="0"
-    aria-valuemax="100"
-    aria-valuenow={openedVotePercent}
-  >
-    <div
-      class="rounded-l-full bg-blue-500"
-      class:rounded-r-full={openedVotePercent === 100}
-      style="flex-grow: {openedVotePercent}"
-    ></div>
-    <div
-      class="rounded-r-full bg-blue-200 dark:bg-blue-950"
-      class:rounded-l-full={openedVotePercent === 0}
-      style="flex-grow: {100 - openedVotePercent}"
-    ></div>
-  </div>
-  <span class="text-sm whitespace-nowrap text-neutral-600 dark:text-neutral-400"
-    >{totalOpenedCount} 👁️</span
-  >
-</div>
+<Turnout yviewers={ypollViewers} voters={allVoters} />
 
 <ul class="flex flex-col gap-4 pt-2">
-  {#each options as option, index (option.id)}
+  {#each displayOptions as option, index (option.id)}
     <li
       class="flex flex-col gap-1 px-2"
       use:droppable={{
@@ -272,63 +241,67 @@
       }}
     >
       <div class="flex flex-row items-center">
-        <span
-          class="option-drag-handle cursor-grab self-start text-neutral-400"
-          use:draggable={{ container: index.toString(), dragData: option }}
-        >
-          <svg width="17" height="28" viewBox="-1.5 -1.5 12 18">
-            <circle cx="1.5" cy="1.5" r="1.3" fill="currentColor" />
-            <circle cx="7.5" cy="1.5" r="1.3" fill="currentColor" />
-            <circle cx="1.5" cy="7.5" r="1.3" fill="currentColor" />
-            <circle cx="7.5" cy="7.5" r="1.3" fill="currentColor" />
-            <circle cx="1.5" cy="13.5" r="1.3" fill="currentColor" />
-            <circle cx="7.5" cy="13.5" r="1.3" fill="currentColor" />
-          </svg>
-        </span>
-        <button
-          class="self-start ml-1"
-          aria-label={myVotes[option.id]
-            ? m.remove_vote_label()
-            : m.vote_label()}
-          onclick={() => toggleVote(option.id)}
-        >
-          {#if myVotes[option.id]}
-            <svg
-              class="text-blue-500"
-              width="28"
-              height="28"
-              viewBox="0 0 16 16"
-            >
-              <circle cx="8" cy="8" r="7" fill="currentColor" />
-              <path
-                d="M5 8.5l2 2 4-5"
-                fill="none"
-                stroke="white"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              />
+        {#if !prefs.showVotes}
+          <span
+            class="option-drag-handle cursor-grab self-start text-neutral-400"
+            use:draggable={{ container: index.toString(), dragData: option }}
+          >
+            <svg width="17" height="28" viewBox="-1.5 -1.5 12 18">
+              <circle cx="1.5" cy="1.5" r="1.3" fill="currentColor" />
+              <circle cx="7.5" cy="1.5" r="1.3" fill="currentColor" />
+              <circle cx="1.5" cy="7.5" r="1.3" fill="currentColor" />
+              <circle cx="7.5" cy="7.5" r="1.3" fill="currentColor" />
+              <circle cx="1.5" cy="13.5" r="1.3" fill="currentColor" />
+              <circle cx="7.5" cy="13.5" r="1.3" fill="currentColor" />
             </svg>
-          {:else}
-            <svg
-              class="text-neutral-300 dark:text-neutral-600"
-              width="28"
-              height="28"
-              viewBox="0 0 16 16"
-            >
-              <circle
-                cx="8"
-                cy="8"
-                r="6"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-              />
-            </svg>
-          {/if}
-        </button>
+          </span>
+          <button
+            class="self-start ml-1"
+            aria-label={myVotes[option.id]
+              ? m.remove_vote_label()
+              : m.vote_label()}
+            onclick={() => toggleVote(option.id)}
+          >
+            {#if myVotes[option.id]}
+              <svg
+                class="text-blue-500"
+                width="28"
+                height="28"
+                viewBox="0 0 16 16"
+              >
+                <circle cx="8" cy="8" r="7" fill="currentColor" />
+                <path
+                  d="M5 8.5l2 2 4-5"
+                  fill="none"
+                  stroke="white"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            {:else}
+              <svg
+                class="text-neutral-300 dark:text-neutral-600"
+                width="28"
+                height="28"
+                viewBox="0 0 16 16"
+              >
+                <circle
+                  cx="8"
+                  cy="8"
+                  r="6"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                />
+              </svg>
+            {/if}
+          </button>
+        {/if}
         <textarea
-          class="grow resize-none overflow-hidden wrap-break-word whitespace-pre-wrap outline-none focus:ring-2 focus:ring-blue-500 ml-2"
+          class="grow resize-none overflow-hidden wrap-break-word whitespace-pre-wrap outline-none focus:ring-2 focus:ring-blue-500 {prefs.showVotes
+            ? ''
+            : 'ml-2'}"
           rows="1"
           use:bindYText={{
             yText: optionYText(option.id),
@@ -373,7 +346,7 @@
             {#if i > 0}<span>, </span>{/if}
             {#if voter.anonymous}
               <span
-                class="inline-flex items-center justify-center rounded-full border border-neutral-300 bg-[#929292] px-1"
+                class="inline-flex h-4 items-center justify-center overflow-hidden rounded-full border border-neutral-300 bg-[#929292] px-1 leading-none"
                 >{voter.name}</span
               >
             {:else}

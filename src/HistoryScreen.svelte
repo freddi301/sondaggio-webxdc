@@ -86,7 +86,7 @@
             <span>{historyDateFormat.format(entry.at)}</span>
             {#if voter.anonymous}
               <span
-                class="inline-flex items-center justify-center rounded-full border border-neutral-300 bg-[#929292] px-1"
+                class="inline-flex h-4 items-center justify-center overflow-hidden rounded-full border border-neutral-300 bg-[#929292] px-1 leading-none"
                 >{voter.name}</span
               >
             {:else}

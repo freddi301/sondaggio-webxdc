@@ -53,6 +53,8 @@
     </div>
     <p>{@render line(m.info_dotvoting_intro())}</p>
     <p>{@render line(m.info_feature_dotvoting())}</p>
+    <p>{@render line(m.info_feature_dot_voter_count())}</p>
+    <p>{@render line(m.info_feature_viewer_count())}</p>
     <p>{@render line(m.info_dotvoting_options())}</p>
     <p>{@render line(m.info_dotvoting_goto())}</p>
 
