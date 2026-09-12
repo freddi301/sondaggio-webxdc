@@ -34,6 +34,7 @@
   "history_unchecked": "unchecked",
   "history_dot_added": "dot added",
   "history_dot_removed": "dot removed",
+  "history_viewed": "viewed the poll",
   "history_field_title": "title",
   "history_field_description": "description",
   "history_field_option": "option",

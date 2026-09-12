@@ -63,6 +63,8 @@
         return { text: m.history_dot_added(), icon: "🪙" };
       case "dot_dec":
         return { text: m.history_dot_removed(), icon: "🪙" };
+      case "view":
+        return { text: m.history_viewed(), icon: "👁️" };
     }
   }
 </script>
@@ -112,7 +114,7 @@
             >
               {entry.action.newValue}
             </div>
-          {:else}
+          {:else if entry.action.kind !== "view"}
             <div>{entry.action.optionLabel}</div>
           {/if}
         </li>

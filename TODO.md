@@ -1,0 +1,1 @@
+- refactor all persistance and logic code to a new single file (see prefs, yjs-sync and all .svelte files)

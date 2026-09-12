@@ -5,27 +5,7 @@
   import InfoScreen from "./InfoScreen.svelte";
   import VotingScreen from "./VotingScreen.svelte";
   import DotVotingScreen from "./DotVotingScreen.svelte";
-  import { prefs } from "./prefs.svelte";
-
-  const INFO_SEEN_KEY = "sondaggio-info-seen";
-  const infoSeen = localStorage.getItem(INFO_SEEN_KEY) === "true";
-  if (!infoSeen) localStorage.setItem(INFO_SEEN_KEY, "true");
-
-  type View = "poll" | "dots" | "history" | "info";
-  const VIEWS: View[] = ["poll", "dots", "history", "info"];
-  const VIEW_KEY = "sondaggio-view";
-
-  const storedView = localStorage.getItem(VIEW_KEY) as View | null;
-  let view = $state<View>(
-    !infoSeen
-      ? "info"
-      : storedView && VIEWS.includes(storedView)
-        ? storedView
-        : "poll",
-  );
-  $effect(() => {
-    localStorage.setItem(VIEW_KEY, view);
-  });
+  import { prefs, type View } from "./prefs.svelte";
 
   const tabs: { id: View; icon: string; label: () => string }[] = [
     { id: "info", icon: "ℹ️", label: () => m.info_view_button() },
@@ -45,7 +25,7 @@
     if (to === undefined) return;
     event.preventDefault();
     const next = (to + tabs.length) % tabs.length;
-    view = tabs[next].id;
+    prefs.view = tabs[next].id;
     tabEls[next]?.focus();
   }
 </script>
@@ -55,7 +35,7 @@
 >
   <div class="flex flex-row items-center gap-2 px-4">
     <img src="icon.svg" alt="" class="h-6 w-6 mb-1 mt-2" />
-    <span class="grow font-bold mt-2 text-neutral-500 dark:text-neutral-400"
+    <span class="grow font-bold my-1 text-neutral-500 dark:text-neutral-400"
       >{m.app_name()}<span
         class="ml-1 text-xs font-normal text-neutral-500 dark:text-neutral-400"
         >v{pkg.version}</span
@@ -67,14 +47,14 @@
           bind:this={tabEls[i]}
           id="tab-{tab.id}"
           role="tab"
-          class="border-b-4 px-2 text-sm py-1 {view === tab.id
+          class="border-b-4 px-2 text-sm py-1 {prefs.view === tab.id
             ? 'border-blue-500 bg-blue-100 dark:bg-blue-900'
             : 'border-transparent'}"
-          aria-selected={view === tab.id}
+          aria-selected={prefs.view === tab.id}
           aria-controls="tabpanel"
           aria-label={tab.label()}
-          tabindex={view === tab.id ? 0 : -1}
-          onclick={() => (view = tab.id)}
+          tabindex={prefs.view === tab.id ? 0 : -1}
+          onclick={() => (prefs.view = tab.id)}
           onkeydown={(event) => onTabKey(event, i)}
         >
           {tab.icon}
@@ -93,14 +73,14 @@
   <div
     id="tabpanel"
     role="tabpanel"
-    aria-labelledby="tab-{view}"
+    aria-labelledby="tab-{prefs.view}"
     class="flex flex-col gap-2"
   >
-    {#if view === "history"}
+    {#if prefs.view === "history"}
       <HistoryScreen />
-    {:else if view === "info"}
+    {:else if prefs.view === "info"}
       <InfoScreen />
-    {:else if view === "dots"}
+    {:else if prefs.view === "dots"}
       <DotVotingScreen />
     {:else}
       <VotingScreen />

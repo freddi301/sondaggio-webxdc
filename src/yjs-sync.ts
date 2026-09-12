@@ -8,12 +8,18 @@ export const ydescription = ydoc.getText("description");
 export const yoptionTexts = ydoc.getMap<Y.Text>("optionTexts");
 export const yoptionOrder = ydoc.getArray<string>("optionOrder");
 export const yoptionVotes = ydoc.getMap<Y.Map<string>>("optionVotes");
+export const ydotVotes = ydoc.getMap<Y.Map<DotVote>>("dotVotes");
+export const yopeners = ydoc.getMap<boolean>("openers");
+export const yshowName = ydoc.getMap<boolean>("showName");
+export const yeditLog = ydoc.getArray<EditLogEntry>("editLog");
+
+export const selfId = window.webxdc?.selfAddr ?? "local";
+export const selfName = window.webxdc?.selfName ?? m.self_name_fallback();
 
 export interface DotVote {
   name: string;
   count: number;
 }
-export const ydotVotes = ydoc.getMap<Y.Map<DotVote>>("dotVotes");
 
 export const DOT_BUDGET = 5;
 
@@ -21,23 +27,16 @@ export function orderedTextIds(): string[] {
   return yoptionOrder.toArray().filter((id) => yoptionTexts.has(id));
 }
 
-export const yopeners = ydoc.getMap<boolean>("openers");
-// Per-voter preference: show their real name in the votes list, or a 🥷
-// placeholder. Keyed by userId, defaults to true (shown) when absent.
-export const yshowName = ydoc.getMap<boolean>("showName");
-
-export const selfId = window.webxdc?.selfAddr ?? "local";
-export const selfName = window.webxdc?.selfName ?? m.self_name_fallback();
-
 export type EditField =
   { kind: "title" } | { kind: "description" } | { kind: "option" };
 
 export type EditAction =
+  | { kind: "view" }
+  | { kind: "edit"; field: EditField; oldValue: string; newValue: string }
   | { kind: "select"; optionLabel: string }
   | { kind: "deselect"; optionLabel: string }
   | { kind: "dot_inc"; optionLabel: string }
-  | { kind: "dot_dec"; optionLabel: string }
-  | { kind: "edit"; field: EditField; oldValue: string; newValue: string };
+  | { kind: "dot_dec"; optionLabel: string };
 
 export interface EditLogEntry {
   id?: string;
@@ -47,12 +46,14 @@ export interface EditLogEntry {
   action: EditAction;
 }
 
-export const yeditLog = ydoc.getArray<EditLogEntry>("editLog");
+export function generateUUID() {
+  return String(Date.now() + Math.random());
+}
 
 export function logEdit(action: EditAction) {
   yeditLog.push([
     {
-      id: crypto.randomUUID(),
+      id: generateUUID(),
       at: Date.now(),
       userId: selfId,
       userName: selfName,
@@ -123,7 +124,10 @@ ydotVotes.observe(pruneOrphans);
 
 if (!yopeners.has(selfId)) {
   setTimeout(() => {
-    yopeners.set(selfId, true);
+    ydoc.transact(() => {
+      yopeners.set(selfId, true);
+      logEdit({ kind: "view" });
+    });
     syncNow();
   }, 2000);
 }

@@ -1,5 +1,6 @@
 <script lang="ts">
   import { m } from "./paraglide/messages.js";
+  import { prefs } from "./prefs.svelte";
 
   const CHIP_RE = /(➕|🗑️|⠿|▲|▼|⏳|☀️|🌙|ℹ️|🗳️|🪙|🥷|✅|👁️|\[[^\]]+\])/u;
 
@@ -20,7 +21,15 @@
 
 <div class="flex h-[calc(100dvh-4rem)] flex-col gap-3 pb-2 text-sm">
   <div class="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-4">
-    <h2 class="text-lg font-bold">{m.info_polls_heading()}</h2>
+    <div class="flex flex-row items-center justify-between gap-2">
+      <h2 class="text-lg font-bold">{m.info_polls_heading()}</h2>
+      <button
+        class="shrink-0 rounded-full bg-blue-500 px-3 py-1 text-sm font-bold text-white"
+        onclick={() => (prefs.view = "poll")}
+      >
+        🗳️ {m.poll_view_button()}
+      </button>
+    </div>
     <p>{@render line(m.info_feature_edit())}</p>
     <p>{@render line(m.info_feature_add())}</p>
     <p>{@render line(m.info_feature_delete())}</p>
@@ -33,7 +42,15 @@
     <p>{@render line(m.info_feature_history())}</p>
     <p>{@render line(m.info_polls_goto())}</p>
 
-    <h2 class="text-lg font-bold">{m.info_dotvoting_heading()}</h2>
+    <div class="flex flex-row items-center justify-between gap-2">
+      <h2 class="text-lg font-bold">{m.info_dotvoting_heading()}</h2>
+      <button
+        class="shrink-0 rounded-full bg-blue-500 px-3 py-1 text-sm font-bold text-white"
+        onclick={() => (prefs.view = "dots")}
+      >
+        🪙 {m.dotvoting_view_button()}
+      </button>
+    </div>
     <p>{@render line(m.info_dotvoting_intro())}</p>
     <p>{@render line(m.info_feature_dotvoting())}</p>
     <p>{@render line(m.info_dotvoting_options())}</p>

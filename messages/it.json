@@ -25,8 +25,8 @@
       }
     }
   ],
-  "poll_view_button": "Visualizza sondaggio",
-  "dotvoting_view_button": "Visualizza dot voting",
+  "poll_view_button": "Vai al sondaggio",
+  "dotvoting_view_button": "Vai al dot voting",
   "history_view_button": "Visualizza cronologia modifiche",
   "history_heading": "Cronologia modifiche",
   "history_empty": "Nessuna modifica ancora",
@@ -34,6 +34,7 @@
   "history_unchecked": "deselezionata",
   "history_dot_added": "bollino aggiunto",
   "history_dot_removed": "bollino rimosso",
+  "history_viewed": "visualizzato",
   "history_field_title": "titolo",
   "history_field_description": "descrizione",
   "history_field_option": "opzione",

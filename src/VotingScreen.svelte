@@ -18,6 +18,7 @@
     logEdit,
     fieldCommit,
     orderedTextIds,
+    generateUUID,
   } from "./yjs-sync";
   import { m } from "./paraglide/messages.js";
   import { draggable, droppable, type DragDropState } from "@thisux/sveltednd";
@@ -58,7 +59,7 @@
   }
 
   function addOption() {
-    const id = crypto.randomUUID();
+    const id = generateUUID();
     ydoc.transact(() => {
       yoptionTexts.set(id, new Y.Text());
       yoptionVotes.set(id, new Y.Map<string>());
@@ -214,7 +215,9 @@
 <div
   class="flex flex-row items-center justify-between px-4 text-base text-neutral-600 dark:text-neutral-400"
 >
-  <label class="flex flex-row items-baseline gap-2 font-bold text-black dark:text-neutral-100">
+  <label
+    class="flex flex-row items-baseline gap-2 font-bold text-black dark:text-neutral-100"
+  >
     <input type="checkbox" bind:checked={prefs.showVotes} />
     {m.show_votes_label()}
   </label>
@@ -389,11 +392,8 @@
 </ul>
 
 <button
-  class="self-center px-2 py-1 disabled:opacity-50"
+  class="self-center rounded-full bg-blue-500 px-4 py-2 text-sm font-bold text-white disabled:opacity-50"
   onclick={addOption}
-  aria-label={m.add_option_label()}
 >
-  <svg class="text-blue-500" width="24" height="24" viewBox="0 0 16 16">
-    <path d="M6 2h4v4h4v4h-4v4h-4v-4h-4v-4h4v-4z" fill="currentColor" />
-  </svg>
+  ➕&nbsp;&nbsp;{m.add_option_label()}
 </button>
