@@ -86,11 +86,11 @@
             <span>{historyDateFormat.format(entry.at)}</span>
             {#if voter.anonymous}
               <span
-                class="inline-flex h-4 items-center justify-center overflow-hidden rounded-full border border-neutral-300 bg-[#929292] px-1 leading-none"
+                class="inline-flex h-4 items-center justify-center overflow-hidden rounded-sm border border-neutral-300 bg-[#929292] px-1 leading-none"
                 >{voter.name}</span
               >
             {:else}
-              <span class="font-medium text-black dark:text-neutral-100"
+              <span class="font-medium text-black dark:text-neutral-200"
                 >{voter.name}</span
               >
             {/if}
@@ -105,12 +105,12 @@
           </div>
           {#if entry.action.kind === "edit"}
             <div
-              class="rounded bg-red-100 px-1 wrap-break-word whitespace-pre-wrap text-red-900 dark:bg-red-950 dark:text-red-200"
+              class="rounded-sm bg-red-100 px-1 wrap-break-word whitespace-pre-wrap text-red-900 dark:bg-red-950 dark:text-red-200"
             >
               {entry.action.oldValue}
             </div>
             <div
-              class="rounded bg-green-100 px-1 wrap-break-word whitespace-pre-wrap text-green-900 dark:bg-green-950 dark:text-green-200"
+              class="rounded-sm bg-green-100 px-1 wrap-break-word whitespace-pre-wrap text-green-900 dark:bg-green-950 dark:text-green-200"
             >
               {entry.action.newValue}
             </div>

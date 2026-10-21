@@ -31,9 +31,14 @@
 </script>
 
 <main
-  class="flex min-h-screen flex-col gap-2 bg-white text-black dark:bg-neutral-800 dark:text-neutral-100 pb-2"
+  class="flex flex-col gap-2 bg-amber-50 text-black dark:bg-neutral-900 dark:text-neutral-200 {prefs.view ===
+  'info'
+    ? 'h-dvh'
+    : 'min-h-screen pb-2'}"
 >
-  <div class="flex flex-row items-center gap-2 px-4">
+  <div
+    class="relative z-10 flex flex-row items-center gap-2 bg-amber-50 px-4 shadow-lg shadow-black/15 dark:bg-neutral-900 dark:shadow-xl dark:shadow-black"
+  >
     <img src="icon.svg" alt="" class="h-6 w-6 mb-1 my-1" />
     <span class="grow font-bold my-1 text-neutral-500 dark:text-neutral-400"
       >{m.app_name()}<span
@@ -41,15 +46,19 @@
         >v{pkg.version}</span
       ></span
     >
-    <div role="tablist" aria-label={m.tabs_label()} class="flex flex-row gap-2">
+    <div
+      role="tablist"
+      aria-label={m.tabs_label()}
+      class="flex flex-row gap-2 self-stretch"
+    >
       {#each tabs as tab, i (tab.id)}
         <button
           bind:this={tabEls[i]}
           id="tab-{tab.id}"
           role="tab"
-          class="border-b-4 px-2 text-sm py-1 {prefs.view === tab.id
-            ? 'border-blue-500 bg-blue-100 dark:bg-blue-900'
-            : 'border-transparent'}"
+          class="px-2 text-sm py-1 {prefs.view === tab.id
+            ? 'bg-emerald-700 dark:bg-emerald-900'
+            : ''}"
           aria-selected={prefs.view === tab.id}
           aria-controls="tabpanel"
           aria-label={tab.label()}
@@ -74,7 +83,7 @@
     id="tabpanel"
     role="tabpanel"
     aria-labelledby="tab-{prefs.view}"
-    class="flex flex-col gap-2"
+    class="flex min-h-0 flex-1 flex-col gap-2"
   >
     {#if prefs.view === "history"}
       <HistoryScreen />

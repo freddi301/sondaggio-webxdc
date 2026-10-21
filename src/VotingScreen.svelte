@@ -212,9 +212,9 @@
   }
 </script>
 
-<div class="flex flex-row items-center gap-2 px-4">
+<div class="flex flex-row items-center gap-2 px-4 pt-2">
   <textarea
-    class="grow resize-none overflow-hidden text-xl font-bold wrap-break-word whitespace-pre-wrap outline-none focus:ring-2 focus:ring-blue-500"
+    class="grow resize-none overflow-hidden text-xl font-bold wrap-break-word whitespace-pre-wrap rounded-sm outline-none focus:ring-2 focus:ring-emerald-600"
     rows="1"
     use:bindYText={{ yText: ytitle, onCommit: commitTitle }}
     use:autogrow
@@ -223,7 +223,7 @@
 
 <div class="flex flex-row items-center gap-2 px-4">
   <textarea
-    class="grow resize-none overflow-hidden wrap-break-word whitespace-pre-wrap outline-none focus:ring-2 focus:ring-blue-500"
+    class="grow resize-none overflow-hidden wrap-break-word whitespace-pre-wrap rounded-sm outline-none focus:ring-2 focus:ring-emerald-600"
     rows="1"
     use:bindYText={{ yText: ydescription, onCommit: commitDescription }}
     use:autogrow
@@ -234,7 +234,7 @@
   class="flex flex-row items-center justify-between px-4 text-base text-neutral-600 dark:text-neutral-400"
 >
   <label
-    class="flex flex-row items-baseline gap-2 font-bold text-black dark:text-neutral-100"
+    class="flex flex-row items-baseline gap-2 font-bold text-black dark:text-neutral-200"
   >
     <input type="checkbox" bind:checked={prefs.showVotes} />
     {m.show_votes_label()}
@@ -251,10 +251,10 @@
 
 <Turnout yviewers={ypollViewers} voters={allVoters} />
 
-<ul class="flex flex-col gap-4 pt-2">
+<ul class="flex flex-col gap-3 px-2 pt-2">
   {#each displayOptions as option, index (option.id)}
     <li
-      class="flex flex-col gap-1 px-2"
+      class="flex flex-col gap-1 rounded-md shadow-[0_0_8px_rgb(0_0_0/0.15)] dark:shadow-[0_0_10px_rgb(0_0_0)]"
       use:droppable={{
         container: index.toString(),
         callbacks: { onDrop: handleOptionDrop },
@@ -263,7 +263,7 @@
       <div class="flex flex-row items-center">
         {#if !prefs.showVotes}
           <span
-            class="option-drag-handle cursor-grab self-start text-neutral-400"
+            class="option-drag-handle mt-1.5 ml-2 cursor-grab self-start text-neutral-400"
             use:draggable={{ container: index.toString(), dragData: option }}
           >
             <svg width="17" height="28" viewBox="-1.5 -1.5 12 18">
@@ -276,7 +276,7 @@
             </svg>
           </span>
           <button
-            class="self-start ml-1"
+            class="mt-1.5 ml-1 self-start"
             aria-label={myVotes[option.id]
               ? m.remove_vote_label()
               : m.vote_label()}
@@ -284,7 +284,7 @@
           >
             {#if myVotes[option.id]}
               <svg
-                class="text-blue-500"
+                class="text-emerald-700"
                 width="28"
                 height="28"
                 viewBox="0 0 16 16"
@@ -319,9 +319,7 @@
           </button>
         {/if}
         <textarea
-          class="grow resize-none overflow-hidden wrap-break-word whitespace-pre-wrap outline-none focus:ring-2 focus:ring-blue-500 {prefs.showVotes
-            ? ''
-            : 'ml-2'}"
+          class="grow resize-none overflow-hidden wrap-break-word whitespace-pre-wrap rounded-sm pt-2 pl-2 outline-none focus:ring-2 focus:ring-emerald-600 focus:ring-inset pb-2"
           rows="1"
           use:bindYText={{
             yText: optionYText(option.id),
@@ -331,61 +329,61 @@
           placeholder={m.option_placeholder()}></textarea>
         {#if option.text.trim() === ""}
           <button
-            class="self-start px-1"
+            class="mt-2 self-start px-1"
             aria-label={m.delete_option_label()}
             onclick={() => deleteOption(option.id)}>🗑️</button
           >
         {/if}
       </div>
-      <div
-        class="flex h-2.5 flex-row"
-        style:visibility={prefs.showVotes ? "visible" : "hidden"}
-        role="progressbar"
-        aria-label={option.text || m.option_result_bar_label()}
-        aria-valuemin="0"
-        aria-valuemax="100"
-        aria-valuenow={votePercent(option.id)}
-      >
+      {#if prefs.showVotes}
         <div
-          class="rounded-l-full bg-blue-500"
-          class:rounded-r-full={votePercent(option.id) === 100}
-          style="flex-grow: {votePercent(option.id)}"
-        ></div>
-        <div
-          class="rounded-r-full bg-blue-200 dark:bg-blue-950"
-          class:rounded-l-full={votePercent(option.id) === 0}
-          style="flex-grow: {100 - votePercent(option.id)}"
-        ></div>
-      </div>
-      <div
-        class="flex flex-row items-center gap-2 text-sm text-neutral-600 dark:text-neutral-400"
-        style:visibility={prefs.showVotes ? "visible" : "hidden"}
-      >
-        <span class="grow">
-          {#each voteNames[option.id] ?? [] as voter, i (i)}
-            {#if i > 0}<span>, </span>{/if}
-            {#if voter.anonymous}
-              <span
-                class="inline-flex h-4 items-center justify-center overflow-hidden rounded-full border border-neutral-300 bg-[#929292] px-1 leading-none"
-                >{voter.name}</span
-              >
-            {:else}
-              <span>{voter.name}</span>
-            {/if}
-          {/each}
-        </span>
-        <span class="self-start whitespace-nowrap"
-          >{voteCount(option.id)}/{totalVoterCount} ({votePercent(
-            option.id,
-          )}%)</span
+          class="mx-2 flex h-2.5 flex-row"
+          role="progressbar"
+          aria-label={option.text || m.option_result_bar_label()}
+          aria-valuemin="0"
+          aria-valuemax="100"
+          aria-valuenow={votePercent(option.id)}
         >
-      </div>
+          <div
+            class="rounded-l-sm bg-emerald-700"
+            class:rounded-r-sm={votePercent(option.id) === 100}
+            style="flex-grow: {votePercent(option.id)}"
+          ></div>
+          <div
+            class="rounded-r-sm bg-emerald-700/20 dark:bg-emerald-950"
+            class:rounded-l-sm={votePercent(option.id) === 0}
+            style="flex-grow: {100 - votePercent(option.id)}"
+          ></div>
+        </div>
+        <div
+          class="mb-2 mx-2 flex flex-row items-center gap-2 text-sm text-neutral-600 dark:text-neutral-400"
+        >
+          <span class="grow">
+            {#each voteNames[option.id] ?? [] as voter, i (i)}
+              {#if i > 0}<span>, </span>{/if}
+              {#if voter.anonymous}
+                <span
+                  class="inline-flex h-4 items-center justify-center overflow-hidden rounded-sm border border-neutral-300 bg-[#929292] px-1 leading-none"
+                  >{voter.name}</span
+                >
+              {:else}
+                <span>{voter.name}</span>
+              {/if}
+            {/each}
+          </span>
+          <span class="self-start whitespace-nowrap"
+            >{voteCount(option.id)}/{totalVoterCount} ({votePercent(
+              option.id,
+            )}%)</span
+          >
+        </div>
+      {/if}
     </li>
   {/each}
 </ul>
 
 <button
-  class="self-center rounded-full bg-blue-500 px-4 py-2 text-sm font-bold text-white disabled:opacity-50"
+  class="mt-4 self-center rounded-md bg-emerald-700 px-4 py-2 text-sm font-bold text-white disabled:opacity-50"
   onclick={addOption}
 >
   ➕&nbsp;&nbsp;{m.add_option_label()}
@@ -395,13 +393,13 @@
   class="flex flex-row items-center justify-center gap-2 px-4 text-sm text-neutral-600 dark:text-neutral-400"
 >
   <button
-    class="rounded-full border border-neutral-300 px-3 py-1 dark:border-neutral-600"
+    class="rounded-md border border-neutral-300 px-3 py-1 dark:border-neutral-600"
     onclick={toggleImport}
   >
     📥&nbsp;&nbsp;{m.import_poll_label()}
   </button>
   <button
-    class="rounded-full border border-neutral-300 px-3 py-1 dark:border-neutral-600"
+    class="rounded-md border border-neutral-300 px-3 py-1 dark:border-neutral-600"
     onclick={exportClick}
   >
     📤&nbsp;&nbsp;{m.export_poll_label()}
@@ -418,12 +416,12 @@
 {#if importOpen}
   <div class="flex flex-col gap-2 px-4">
     <textarea
-      class="w-full resize-none rounded border border-neutral-300 p-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 dark:border-neutral-600"
+      class="w-full resize-none rounded-sm border border-neutral-300 p-2 text-sm outline-none focus:ring-2 focus:ring-emerald-600 dark:border-neutral-600"
       rows="5"
       placeholder={m.import_poll_placeholder()}
       bind:value={importText}></textarea>
     <button
-      class="self-center rounded-full bg-blue-500 px-4 py-2 text-sm font-bold text-white disabled:opacity-50"
+      class="self-center rounded-md bg-emerald-700 px-4 py-2 text-sm font-bold text-white disabled:opacity-50"
       disabled={importText.trim() === ""}
       onclick={submitImport}
     >

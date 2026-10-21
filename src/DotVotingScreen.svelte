@@ -188,9 +188,9 @@
   const commitOption = fieldCommit({ kind: "option" });
 </script>
 
-<div class="flex flex-row items-center gap-2 px-4">
+<div class="flex flex-row items-center gap-2 px-4 pt-2">
   <textarea
-    class="grow resize-none overflow-hidden text-xl font-bold wrap-break-word whitespace-pre-wrap outline-none focus:ring-2 focus:ring-blue-500"
+    class="grow resize-none overflow-hidden text-xl font-bold wrap-break-word whitespace-pre-wrap rounded-sm outline-none focus:ring-2 focus:ring-emerald-600"
     rows="1"
     use:bindYText={{ yText: ytitle, onCommit: commitTitle }}
     use:autogrow
@@ -199,7 +199,7 @@
 
 <div class="flex flex-row items-center gap-2 px-4">
   <textarea
-    class="grow resize-none overflow-hidden wrap-break-word whitespace-pre-wrap outline-none focus:ring-2 focus:ring-blue-500"
+    class="grow resize-none overflow-hidden wrap-break-word whitespace-pre-wrap rounded-sm outline-none focus:ring-2 focus:ring-emerald-600"
     rows="1"
     use:bindYText={{ yText: ydescription, onCommit: commitDescription }}
     use:autogrow
@@ -210,7 +210,7 @@
   class="flex flex-row items-center justify-between px-4 text-base text-neutral-600 dark:text-neutral-400"
 >
   <label
-    class="flex flex-row items-baseline gap-2 font-bold text-black dark:text-neutral-100"
+    class="flex flex-row items-baseline gap-2 font-bold text-black dark:text-neutral-200"
   >
     <input type="checkbox" bind:checked={prefs.showVotes} />
     {m.show_votes_label()}
@@ -238,7 +238,7 @@
       <li class="flex flex-col gap-1 pl-2 {prefs.showVotes ? 'pr-2' : ''}">
         <div class="flex flex-row items-center gap-1">
           <textarea
-            class="grow resize-none overflow-hidden wrap-break-word whitespace-pre-wrap outline-none focus:ring-2 focus:ring-blue-500"
+            class="grow resize-none overflow-hidden wrap-break-word whitespace-pre-wrap rounded-sm outline-none focus:ring-2 focus:ring-emerald-600"
             rows="1"
             use:bindYText={{
               yText: optionYText(option.id),
@@ -281,13 +281,13 @@
           aria-valuetext="{optionTokens[option.id] ?? 0} 🪙"
         >
           <div
-            class="rounded-l-full bg-blue-500"
-            class:rounded-r-full={optionFillPercent(option.id) === 100}
+            class="rounded-l-sm bg-emerald-700"
+            class:rounded-r-sm={optionFillPercent(option.id) === 100}
             style="flex-grow: {optionFillPercent(option.id)}"
           ></div>
           <div
-            class="rounded-r-full bg-blue-200 dark:bg-blue-950"
-            class:rounded-l-full={optionFillPercent(option.id) === 0}
+            class="rounded-r-sm bg-emerald-700/20 dark:bg-emerald-950"
+            class:rounded-l-sm={optionFillPercent(option.id) === 0}
             style="flex-grow: {100 - optionFillPercent(option.id)}"
           ></div>
         </div>
@@ -300,7 +300,7 @@
               {#if i > 0}<span>, </span>{/if}
               {#if voter.anonymous}
                 <span
-                  class="inline-flex h-4 items-center justify-center overflow-hidden rounded-full border border-neutral-300 bg-[#929292] px-1 leading-none"
+                  class="inline-flex h-4 items-center justify-center overflow-hidden rounded-sm border border-neutral-300 bg-[#929292] px-1 leading-none"
                   >{voter.name}</span
                 >
               {:else}

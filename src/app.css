@@ -2,6 +2,10 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+input[type="checkbox"] {
+  accent-color: var(--color-emerald-700);
+}
+
 .svelte-dnd-draggable {
   touch-action: none;
   user-select: none;
@@ -27,7 +31,7 @@
   left: 0;
   right: 0;
   height: 2px;
-  background-color: #3b82f6;
+  background-color: var(--color-emerald-600);
   border-radius: 1px;
   z-index: 10;
   pointer-events: none;
