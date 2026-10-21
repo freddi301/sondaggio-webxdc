@@ -2,7 +2,7 @@
   import { m } from "./paraglide/messages.js";
   import { prefs } from "./prefs.svelte";
 
-  const CHIP_RE = /(➕|🗑️|⠿|▲|▼|⏳|☀️|🌙|ℹ️|🗳️|🪙|🥷|✅|👁️|\[[^\]]+\])/u;
+  const CHIP_RE = /(➕|🗑️|⠿|▲|▼|⏳|☀️|🌙|ℹ️|📥|📤|🗳️|🪙|🥷|✅|👁️|\[[^\]]+\])/u;
 
   const chipLabel = (part: string) =>
     part.startsWith("[") ? part.slice(1, -1) : part;
@@ -40,6 +40,8 @@
     <p>{@render line(m.info_feature_voter_count())}</p>
     <p>{@render line(m.info_feature_viewer_count())}</p>
     <p>{@render line(m.info_feature_history())}</p>
+    <p>{@render line(m.info_feature_export())}</p>
+    <p>{@render line(m.info_feature_import())}</p>
     <p>{@render line(m.info_polls_goto())}</p>
 
     <div class="flex flex-row items-center justify-between gap-2">

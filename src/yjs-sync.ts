@@ -70,6 +70,83 @@ export function fieldCommit(field: EditField) {
   };
 }
 
+export function createOption(text = ""): string {
+  const id = generateUUID();
+  ydoc.transact(() => {
+    yoptionTexts.set(id, new Y.Text(text));
+    yoptionVotes.set(id, new Y.Map<string>());
+    ydotVotes.set(id, new Y.Map<DotVote>());
+    yoptionOrder.push([id]);
+  });
+  return id;
+}
+
+export interface PollFile {
+  title: string;
+  description: string;
+  options: string[];
+}
+
+export function exportPoll(): PollFile {
+  return {
+    title: ytitle.toString(),
+    description: ydescription.toString(),
+    options: orderedTextIds().map(
+      (id) => yoptionTexts.get(id)?.toString() ?? "",
+    ),
+  };
+}
+
+function replaceText(ytext: Y.Text, field: EditField, newValue: string) {
+  const oldValue = ytext.toString();
+  if (oldValue === newValue) return;
+  ydoc.transact(() => {
+    ytext.delete(0, ytext.length);
+    ytext.insert(0, newValue);
+    logEdit({ kind: "edit", field, oldValue, newValue });
+  });
+}
+
+export function importPoll(data: unknown): boolean {
+  if (typeof data !== "object" || data === null || Array.isArray(data)) {
+    return false;
+  }
+  const { title, description, options } = data as Record<string, unknown>;
+  if (
+    typeof title !== "string" &&
+    typeof description !== "string" &&
+    !Array.isArray(options)
+  ) {
+    return false;
+  }
+  if (typeof title === "string") replaceText(ytitle, { kind: "title" }, title);
+  if (typeof description === "string") {
+    replaceText(ydescription, { kind: "description" }, description);
+  }
+  if (Array.isArray(options)) {
+    const known = new Set(
+      orderedTextIds().map((id) => yoptionTexts.get(id)?.toString().trim()),
+    );
+    for (const item of options) {
+      if (typeof item !== "string") continue;
+      const text = item.trim();
+      if (text === "" || known.has(text)) continue;
+      known.add(text);
+      ydoc.transact(() => {
+        createOption(text);
+        logEdit({
+          kind: "edit",
+          field: { kind: "option" },
+          oldValue: "",
+          newValue: text,
+        });
+      });
+    }
+  }
+  syncNow();
+  return true;
+}
+
 function totalVoterCount(): number {
   const voters = new Set<string>();
   for (const id of orderedTextIds()) {

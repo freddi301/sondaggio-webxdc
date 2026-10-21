@@ -27,3 +27,8 @@ knowledge. Ensure you have current documentation trough Context7 in context for:
 ## When to ask
 
 If anything is not obvious, ask before proceeding.
+
+## Coherence
+
+Keep translations up to date and coherent.
+Keep Intro screen coherent with the app workings.

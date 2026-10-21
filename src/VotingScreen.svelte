@@ -9,7 +9,6 @@
     yoptionOrder,
     yoptionVotes,
     ydotVotes,
-    type DotVote,
     ypollViewers,
     yshowName,
     selfId,
@@ -18,13 +17,14 @@
     logEdit,
     fieldCommit,
     orderedTextIds,
-    generateUUID,
+    createOption,
   } from "./yjs-sync";
   import { m } from "./paraglide/messages.js";
   import { draggable, droppable, type DragDropState } from "@thisux/sveltednd";
   import { autogrow, bindYText } from "./yjs-textarea";
   import { prefs } from "./prefs.svelte";
   import Turnout from "./Turnout.svelte";
+  import { exportPollText, importPollText } from "./poll-text";
 
   interface Option {
     id: string;
@@ -60,14 +60,34 @@
   }
 
   function addOption() {
-    const id = generateUUID();
-    ydoc.transact(() => {
-      yoptionTexts.set(id, new Y.Text());
-      yoptionVotes.set(id, new Y.Map<string>());
-      ydotVotes.set(id, new Y.Map<DotVote>());
-      yoptionOrder.push([id]);
-    });
+    createOption();
     syncNow();
+  }
+
+  let importOpen = $state(false);
+  let importText = $state("");
+  let importFailed = $state(false);
+  function toggleImport() {
+    importOpen = !importOpen;
+    importFailed = false;
+  }
+
+  const COPIED_NOTICE_MS = 4000;
+  let exportCopied = $state(false);
+  let copiedTimer: ReturnType<typeof setTimeout> | undefined;
+  async function exportClick() {
+    exportCopied = await exportPollText();
+    clearTimeout(copiedTimer);
+    if (exportCopied) {
+      copiedTimer = setTimeout(() => (exportCopied = false), COPIED_NOTICE_MS);
+    }
+  }
+  onDestroy(() => clearTimeout(copiedTimer));
+  function submitImport() {
+    importFailed = !importPollText(importText);
+    if (importFailed) return;
+    importOpen = false;
+    importText = "";
   }
 
   function deleteOption(id: string) {
@@ -370,3 +390,52 @@
 >
   ➕&nbsp;&nbsp;{m.add_option_label()}
 </button>
+
+<div
+  class="flex flex-row items-center justify-center gap-2 px-4 text-sm text-neutral-600 dark:text-neutral-400"
+>
+  <button
+    class="rounded-full border border-neutral-300 px-3 py-1 dark:border-neutral-600"
+    onclick={toggleImport}
+  >
+    📥&nbsp;&nbsp;{m.import_poll_label()}
+  </button>
+  <button
+    class="rounded-full border border-neutral-300 px-3 py-1 dark:border-neutral-600"
+    onclick={exportClick}
+  >
+    📤&nbsp;&nbsp;{m.export_poll_label()}
+  </button>
+</div>
+{#if exportCopied}
+  <p
+    class="px-4 text-center text-sm text-green-700 dark:text-green-400"
+    role="status"
+  >
+    {m.export_poll_copied()}
+  </p>
+{/if}
+{#if importOpen}
+  <div class="flex flex-col gap-2 px-4">
+    <textarea
+      class="w-full resize-none rounded border border-neutral-300 p-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 dark:border-neutral-600"
+      rows="5"
+      placeholder={m.import_poll_placeholder()}
+      bind:value={importText}></textarea>
+    <button
+      class="self-center rounded-full bg-blue-500 px-4 py-2 text-sm font-bold text-white disabled:opacity-50"
+      disabled={importText.trim() === ""}
+      onclick={submitImport}
+    >
+      {m.import_poll_submit()}
+    </button>
+  </div>
+{/if}
+{#if importFailed}
+  <p
+    class="px-4 text-center text-sm text-red-600 dark:text-red-400"
+    role="alert"
+  >
+    {m.import_poll_invalid()}
+  </p>
+{/if}
